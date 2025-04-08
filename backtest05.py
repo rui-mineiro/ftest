@@ -44,8 +44,7 @@ def get_stock_data(ticker="TSLA"):
     tsla_data['Cash']=0
     tsla_data['Shares']=0
     tsla_data['Portfolio Value']=0
-    tsla_data['Parm1']=0
-
+    tsla_data['Parm1']=1
 
     return tsla_data
 
