@@ -63,12 +63,12 @@ def deposit(stock_data, date_deposit_pairs):
     Deposit money in portfolio
     """
     for date, value in date_deposit_pairs:
-        date = datetime.strptime(date, '%Y-%m-%d').timestamp()
+        date = pd.to_datetime(date,utc=True)
         try:
             # Try to get the exact index position
             position = stock_data.index.get_loc(date)
         except KeyError:
-            indexer = stock_data.index.get_indexer(date,method='backfill')
+            indexer = stock_data.index.get_indexer([date],method='backfill')
             position = indexer[0]+1
 
         stock_data.loc[stock_data.index>=stock_data.index[position], 'Cash']   += value
@@ -83,11 +83,12 @@ def transaction(stock_data, date_stocks_pairs):
     Update portfolio with stock transactions
     """
     for date, value in date_stocks_pairs:
+        date = pd.to_datetime(date,utc=True)
         try:
             # Try to get the exact index position
             position = stock_data.index.get_loc(date)
         except KeyError:
-            indexer = stock_data.index.get_indexer([date])
+            indexer = stock_data.index.get_indexer([date],method='backfill')
             position = indexer[0]+1
 
         stock_data.loc[stock_data.index>=stock_data.index[position], 'Shares'] += value
@@ -108,7 +109,7 @@ rule = [
 cash_pairs = [
     ('1972-04-10', 1000),
     ('2010-07-01', 1000),
-    ('2024-04-05', -1000)
+    ('2025-04-05', -1000)
 ]
 
 date_stocks_validation = [
