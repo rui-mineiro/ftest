@@ -45,7 +45,6 @@ def get_stock_data(ticker="TSLA"):
     tsla_data['Shares']=0
     tsla_data['Portfolio Value']=0
     tsla_data['Parm1']=0
-    tsla_data['Mean2']=0
 
 
     return tsla_data
