@@ -50,7 +50,6 @@ def get_stock_data(ticker="TSLA"):
         df['Cash']=0
         df['Shares']=0
         df['Portfolio Value']=0
-        df['Parm1']=1
         df.to_csv(CACHE_FILE)
         print(f"Data saved to {CACHE_FILE}")
     
@@ -107,8 +106,8 @@ rule = [
 
 cash_pairs = [
     ('1972-04-10', 1000),
-    ('2020-04-10', 1000),
-    ('2024-04-10', -1000)
+    ('2010-07-01', 1000),
+    ('2025-04-05', -1000)
 ]
 
 date_stocks_validation = [
