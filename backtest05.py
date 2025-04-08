@@ -47,14 +47,14 @@ def get_stock_data(ticker="TSLA"):
         print("Fetching data from yfinance...")
         ticker = yf.Ticker(ticker)
         df = ticker.history(period="max")
+        df['Cash']=0
+        df['Shares']=0
+        df['Portfolio Value']=0
+        df['Parm1']=1
         df.to_csv(CACHE_FILE)
         print(f"Data saved to {CACHE_FILE}")
     
     
-    df['Cash']=0
-    df['Shares']=0
-    df['Portfolio Value']=0
-    df['Parm1']=1
 
     return df
 
@@ -68,7 +68,7 @@ def deposit(stock_data, date_deposit_pairs):
             # Try to get the exact index position
             position = stock_data.index.get_loc(date)
         except KeyError:
-            indexer = stock_data.index.get_indexer([date], method='ffill')
+            indexer = stock_data.index.get_indexer([date])
             position = indexer[0]+1
 
         stock_data.loc[stock_data.index>=stock_data.index[position], 'Cash']   += value
@@ -87,7 +87,7 @@ def transaction(stock_data, date_stocks_pairs):
             # Try to get the exact index position
             position = stock_data.index.get_loc(date)
         except KeyError:
-            indexer = stock_data.index.get_indexer([date], method='ffill')
+            indexer = stock_data.index.get_indexer([date])
             position = indexer[0]+1
 
         stock_data.loc[stock_data.index>=stock_data.index[position], 'Shares'] += value
@@ -106,7 +106,9 @@ rule = [
 ]
 
 cash_pairs = [
-    ('1972-04-10', 1000)
+    ('1972-04-10', 1000),
+    ('2020-04-10', 1000),
+    ('2024-04-10', -1000)
 ]
 
 date_stocks_validation = [
@@ -114,19 +116,17 @@ date_stocks_validation = [
 ]
 
 date_stocks_transaction = [
-    ('1972-04-10', 1)
+    ('2021-04-10', 10),
+    ('2025-01-10', -10)
+    
 ]
 
-tsla_data = get_stock_data()
-head=tsla_data.index[89]
-tsla_data = deposit(tsla_data, cash_pairs)
+stock_data = get_stock_data()
+stock_data = deposit(stock_data, cash_pairs)
 
-validation_value = transaction(tsla_data.copy(), date_stocks_validation)['Portfolio Value'].iloc[-1]
-training_value   = transaction(tsla_data,        date_stocks_transaction)['Portfolio Value'].iloc[-1]
+validation_value = transaction(stock_data.copy(), date_stocks_validation)['Portfolio Value'].iloc[-1]
+training_value   = transaction(stock_data,        date_stocks_transaction)['Portfolio Value'].iloc[-1]
 
-
-
-
-plot_stock_and_portfolio(tsla_data)
-tsla_data
+plot_stock_and_portfolio(stock_data)
+stock_data
 
