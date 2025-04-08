@@ -1,7 +1,9 @@
+import os
 import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
+
 
 
 def plot_stock_and_portfolio(stock_data):
@@ -35,18 +37,26 @@ def plot_stock_and_portfolio(stock_data):
 
 def get_stock_data(ticker="TSLA"):
 
-    
-    """
-    Fetch all available Tesla stock data from Yahoo Finance from the first available date until today
-    """
-    tesla = yf.Ticker(ticker)
-    tsla_data = tesla.history(period="max")
-    tsla_data['Cash']=0
-    tsla_data['Shares']=0
-    tsla_data['Portfolio Value']=0
-    tsla_data['Parm1']=1
 
-    return tsla_data
+    CACHE_FILE = "stock_history.csv"
+    # Step 1: Load from cache or fetch from yfinance
+    if os.path.exists(CACHE_FILE):
+        print(f"Loading cached data from {CACHE_FILE}")
+        df = pd.read_csv(CACHE_FILE, index_col=0, parse_dates=True)
+    else:
+        print("Fetching data from yfinance...")
+        ticker = yf.Ticker(ticker)
+        df = ticker.history(period="max")
+        df.to_csv(CACHE_FILE)
+        print(f"Data saved to {CACHE_FILE}")
+    
+    
+    df['Cash']=0
+    df['Shares']=0
+    df['Portfolio Value']=0
+    df['Parm1']=1
+
+    return df
 
 
 def deposit(stock_data, date_deposit_pairs):
