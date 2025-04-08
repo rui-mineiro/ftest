@@ -47,12 +47,12 @@ def get_stock_data(ticker="TSLA"):
         print("Fetching data from yfinance...")
         ticker = yf.Ticker(ticker)
         df = ticker.history(period="max")
-        df['Cash']=0
-        df['Shares']=0
-        df['Portfolio Value']=0
         df.to_csv(CACHE_FILE)
         print(f"Data saved to {CACHE_FILE}")
     
+    df['Cash']=0
+    df['Shares']=0
+    df['Portfolio Value']=0
     
 
     return df
@@ -63,11 +63,12 @@ def deposit(stock_data, date_deposit_pairs):
     Deposit money in portfolio
     """
     for date, value in date_deposit_pairs:
+        date = datetime.strptime(date, '%Y-%m-%d').timestamp()
         try:
             # Try to get the exact index position
             position = stock_data.index.get_loc(date)
         except KeyError:
-            indexer = stock_data.index.get_indexer([date])
+            indexer = stock_data.index.get_indexer(date,method='backfill')
             position = indexer[0]+1
 
         stock_data.loc[stock_data.index>=stock_data.index[position], 'Cash']   += value
@@ -107,7 +108,7 @@ rule = [
 cash_pairs = [
     ('1972-04-10', 1000),
     ('2010-07-01', 1000),
-    ('2025-04-05', -1000)
+    ('2024-04-05', -1000)
 ]
 
 date_stocks_validation = [
