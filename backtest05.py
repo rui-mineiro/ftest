@@ -129,5 +129,5 @@ validation_value = transaction(stock_data.copy(), date_stocks_validation)['Portf
 training_value   = transaction(stock_data,        date_stocks_transaction)['Portfolio Value'].iloc[-1]
 
 plot_stock_and_portfolio(stock_data)
-stock_data
+
 
