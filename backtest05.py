@@ -16,7 +16,7 @@ def plot_stock_and_portfolio(stock_data):
     color = 'tab:red'
     ax1.set_xlabel('Date')
     ax1.set_ylabel('Stock Price (USD)')
-    ax1.plot(stock_data.index, stock_data['Close'], label='Tesla Closing Price', color=color, alpha=0.7)
+    ax1.plot(stock_data.index, stock_data['Close'], label='Closing Price', color=color, alpha=0.7)
     ax1.tick_params(axis='y', labelcolor=color)
     ax1.grid(True)
     ax1.legend(loc='upper left')
@@ -29,7 +29,7 @@ def plot_stock_and_portfolio(stock_data):
     ax2.set_ylabel('Portfolio Value (USD)')
     ax2.plot(stock_data.index, stock_data['Portfolio Value'], label='Portfolio Value', color=color)
     ax2.grid(True)
-    ax2.legend(loc='upper left')
+    ax2.legend(loc='upper right')
     
     plt.tight_layout()
     plt.show()
@@ -101,6 +101,9 @@ def transaction(stock_data, date_stocks_pairs):
     return stock_data
 
 
+
+ticker="SPY"
+
 rule = [
     ( -1.5 , 10  ), # Quando desce 1.5% vai comprando accoes
     (    5 , 1   )  # Quando sobe 5% vai vendendo
@@ -122,7 +125,7 @@ date_stocks_transaction = [
     
 ]
 
-stock_data = get_stock_data()
+stock_data = get_stock_data(ticker)
 stock_data = deposit(stock_data, cash_pairs)
 
 validation_value = transaction(stock_data.copy(), date_stocks_validation)['Portfolio Value'].iloc[-1]
