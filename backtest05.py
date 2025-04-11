@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
 
+os.environ["QT_QPA_PLATFORM"] = "xcb"
 
 
 def plot_stock_and_portfolio(stock_data):
