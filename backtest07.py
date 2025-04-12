@@ -16,10 +16,10 @@ os.environ["QT_QPA_PLATFORM"] = "xcb"
 # PARAMETERS
 # -------------------------------
 TICKER = "AAPL"
-SEQ_LEN = 60
-BATCH_SIZE = 64
+SEQ_LEN = 90
+BATCH_SIZE = 15
 LR = 0.001
-EPOCHS = 160
+EPOCHS = 5
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
 
@@ -80,7 +80,7 @@ test_loader = DataLoader(ReturnDataset(X_test, y_test), batch_size=BATCH_SIZE, s
 # LSTM Model
 # -------------------------------
 class LSTMModel(nn.Module):
-    def __init__(self, input_size=1, hidden_size=50, num_layers=2, dropout=0.2):
+    def __init__(self, input_size=1, hidden_size=25, num_layers=2, dropout=0.2):
         super(LSTMModel, self).__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, dropout=dropout)
         self.fc = nn.Linear(hidden_size, 1)
