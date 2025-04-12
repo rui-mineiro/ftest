@@ -49,8 +49,8 @@ def estimate_capm(asset_returns, market_returns):
     """Estimate CAPM parameters for a single asset"""
     X = sm.add_constant(market_returns)  # Add constant for alpha
     model = sm.OLS(asset_returns, X).fit()
-    alpha = model.params[0]
-    beta = model.params[1]
+    alpha = model.params.iloc[0]
+    beta = model.params.iloc[1]
     return alpha, beta
 
 # Estimate for each asset in portfolio
