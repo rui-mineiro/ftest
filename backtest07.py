@@ -19,7 +19,7 @@ TICKER = "AAPL"
 SEQ_LEN = 60
 BATCH_SIZE = 32
 LR = 0.001
-EPOCHS = 80
+EPOCHS = 5
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
 
@@ -29,8 +29,8 @@ print(f"Using device: {DEVICE}")
 
 # Fetch historical data
 def fetch_data(ticker, start="2015-01-01"):
-    df = yf.download(ticker, start=start,auto_adjust=False)['Adj Close']
-#    df = df[['Adj Close']]
+    df = yf.download(ticker, start=start,auto_adjust=False)
+    df = df[['Adj Close']]
     df['log_return'] = np.log(df['Adj Close'] / df['Adj Close'].shift(1))
     df.dropna(inplace=True)
     return df
