@@ -17,9 +17,9 @@ os.environ["QT_QPA_PLATFORM"] = "xcb"
 # -------------------------------
 TICKER = "AAPL"
 SEQ_LEN = 60
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 LR = 0.001
-EPOCHS = 5
+EPOCHS = 160
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
 
