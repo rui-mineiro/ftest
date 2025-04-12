@@ -8,6 +8,9 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
+import os
+
+os.environ["QT_QPA_PLATFORM"] = "xcb"
 
 # -------------------------------
 # PARAMETERS
@@ -26,8 +29,8 @@ print(f"Using device: {DEVICE}")
 
 # Fetch historical data
 def fetch_data(ticker, start="2015-01-01"):
-    df = yf.download(ticker, start=start)
-    df = df[['Adj Close']]
+    df = yf.download(ticker, start=start,auto_adjust=False)['Adj Close']
+#    df = df[['Adj Close']]
     df['log_return'] = np.log(df['Adj Close'] / df['Adj Close'].shift(1))
     df.dropna(inplace=True)
     return df
