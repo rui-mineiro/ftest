@@ -19,10 +19,10 @@ end_date = '2023-12-31'
 ticker = 'AMZN'
 lookback = 30
 batch_size = 16
-hidden_size = 20
+hidden_size = 40
 num_stacked_layers = 1
-learning_rate = 0.0001
-num_epochs = 1000
+learning_rate = 0.001
+num_epochs = 100
 
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
