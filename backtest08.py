@@ -17,6 +17,12 @@ os.environ["QT_QPA_PLATFORM"] = "xcb"
 start_date = '2024-01-01'
 end_date = '2023-12-31'
 ticker = 'AMZN'
+lookback = 30
+batch_size = 16
+hidden_size = 20
+num_stacked_layers = 1
+learning_rate = 0.0001
+num_epochs = 1000
 
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -44,7 +50,7 @@ def prepare_dataframe_for_lstm(df, n_steps):
 
     return df
 
-lookback = 7
+
 shifted_df = prepare_dataframe_for_lstm(data, lookback)
 shifted_df_as_np = shifted_df.to_numpy()
 
@@ -98,7 +104,7 @@ train_dataset = TimeSeriesDataset(X_train, y_train)
 test_dataset = TimeSeriesDataset(X_test, y_test)
 
 
-batch_size = 16
+
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader  = DataLoader(test_dataset,  batch_size=batch_size, shuffle=False)
@@ -128,7 +134,7 @@ class LSTM(nn.Module):
         out = self.fc(out[:, -1, :])
         return out
 
-model = LSTM(1, 4, 1)
+model = LSTM(1, hidden_size, num_stacked_layers )
 model.to(device)
 model
 
@@ -174,8 +180,7 @@ def validate_one_epoch():
     print('***************************************************')
     print()    
 
-learning_rate = 0.001
-num_epochs = 10
+
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
