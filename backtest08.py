@@ -101,7 +101,7 @@ test_dataset = TimeSeriesDataset(X_test, y_test)
 batch_size = 16
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+test_loader  = DataLoader(test_dataset,  batch_size=batch_size, shuffle=False)
 
 for _, batch in enumerate(train_loader):
     x_batch, y_batch = batch[0].to(device), batch[1].to(device)
