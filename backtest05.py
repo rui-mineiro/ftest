@@ -131,7 +131,12 @@ date_stocks_transaction = [
     
 ]
 
+<<<<<<< HEAD
 stock_data = get_stock_data(ticker)
+=======
+ticker_symbol = "SPY"
+stock_data = get_stock_data(ticker_symbol)
+>>>>>>> e464bbd (kkk)
 stock_data = deposit(stock_data, cash_pairs)
 
 validation_value = transaction(stock_data.copy(), date_stocks_validation)['Portfolio Value'].iloc[-1]
