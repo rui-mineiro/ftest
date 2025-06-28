@@ -365,10 +365,10 @@ if __name__ == "__main__":
     print("Data download complete. Starting genetic algorithm optimization...")
 
     # Define genetic algorithm parameters and bounds
-    POPULATION_SIZE = 50
+    POPULATION_SIZE = 100
     GENERATIONS     = 50
-    MUTATION_RATE   = 0.1
-    ELITISM_COUNT   = 2 # Keep the top 2 individuals
+    MUTATION_RATE   = 0.5
+    ELITISM_COUNT   = 0 # Keep the top 2 individuals
 
     percent_drop_bounds = [0.0, 3.0]
     long_mean_bounds = [15, 120]
