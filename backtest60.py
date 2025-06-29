@@ -67,7 +67,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
 
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
         if (price_long_mean - price_short_mean < percent_drop) and (cash_available >= 0):
-            qty = 200 // price_today # Buy shares worth approximately 100 units of currency
+            qty = 100 // price_today # Buy shares worth approximately 100 units of currency
             if qty > 0:
                 cost = qty * price_today
                 shares += qty
@@ -365,13 +365,13 @@ if __name__ == "__main__":
     print("Data download complete. Starting genetic algorithm optimization...")
 
     # Define genetic algorithm parameters and bounds
-    POPULATION_SIZE = 20
-    GENERATIONS     = 10
-    MUTATION_RATE   = 0.1
-    ELITISM_COUNT   = 2 # Keep the top 2 individuals
+    POPULATION_SIZE = 50
+    GENERATIONS     = 5
+    MUTATION_RATE   = 0
+    ELITISM_COUNT   = 1 # Keep the top 2 individuals
 
     percent_drop_bounds = [0.0, 1.5]
-    long_mean_bounds = [15, 360]
+    long_mean_bounds = [8, 60]
     short_mean_bounds = [8, 30]
 
     # Run the genetic algorithm
