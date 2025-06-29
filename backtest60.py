@@ -29,7 +29,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
 
     investment = 0
     shares = 0
-    cash_available = 200 # Initial cash
+    cash_available = 10000000 # Initial cash
 
     # Initialize columns for simulation results
     local_data['portfolio_value'] = 0.0
@@ -67,7 +67,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
 
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
         if (price_long_mean - price_short_mean < percent_drop) and (cash_available >= 0):
-            qty = 100 // price_today # Buy shares worth approximately 100 units of currency
+            qty = 200 // price_today # Buy shares worth approximately 100 units of currency
             if qty > 0:
                 cost = qty * price_today
                 shares += qty
@@ -357,7 +357,7 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean ):
 # --- Main execution block ---
 if __name__ == "__main__":
     print(f"Downloading ETF data for {etf_ticker}...")
-    # Download data once
+    # Download data once  
     original_data = yf.download(etf_ticker , start='2019-02-26' , end='2025-06-27' ,  auto_adjust=False)
     original_data = original_data['Adj Close'].dropna()
     original_data.name = etf_ticker # Name the series for easier access
@@ -365,13 +365,13 @@ if __name__ == "__main__":
     print("Data download complete. Starting genetic algorithm optimization...")
 
     # Define genetic algorithm parameters and bounds
-    POPULATION_SIZE = 100
-    GENERATIONS     = 50
-    MUTATION_RATE   = 0.5
-    ELITISM_COUNT   = 0 # Keep the top 2 individuals
+    POPULATION_SIZE = 80
+    GENERATIONS     = 20
+    MUTATION_RATE   = 0.1
+    ELITISM_COUNT   = 1 # Keep the top 2 individuals
 
     percent_drop_bounds = [0.0, 3.0]
-    long_mean_bounds = [15, 120]
+    long_mean_bounds = [15, 360]
     short_mean_bounds = [8, 30]
 
     # Run the genetic algorithm
