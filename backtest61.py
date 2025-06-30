@@ -140,7 +140,7 @@ def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short
 
             # Ensure long_mean > short_mean and short_mean >= 1
             if 1 <= s_mean < l_mean:
-                population.append((p_drop, l_mean, s_mean))
+                population.append((p_drop, l_mean, s_mean, a_rate))
                 break # Valid individual generated, break inner loop
     return population
 
@@ -167,7 +167,7 @@ def select_parents(population, fitnesses, num_parents_to_select=2, tournament_si
         selected_parents.append(winner)
     return selected_parents
 
-def crossover(parent1, parent2, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
+def crossover(parent1, parent2, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds):
     """
     Performs one-point crossover between two parents to create two children.
     """
@@ -182,17 +182,17 @@ def crossover(parent1, parent2, percent_drop_bounds, long_mean_bounds, short_mea
 
     # Ensure correct data types for children and enforce bounds/constraints
     child1 = enforce_bounds_and_constraints(
-        (float(child1[0]), int(child1[1]), int(child1[2])),
-        percent_drop_bounds, long_mean_bounds, short_mean_bounds
+        (float(child1[0]), int(child1[1]), int(child1[2]), float(child1[3])),
+        percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds
     )
     child2 = enforce_bounds_and_constraints(
-        (float(child2[0]), int(child2[1]), int(child2[2])),
-        percent_drop_bounds, long_mean_bounds, short_mean_bounds
+        (float(child2[0]), int(child2[1]), int(child2[2]), float(child2[3])),
+        percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds
     )
 
     return child1, child2
 
-def mutate(individual, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
+def mutate(individual, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds):
     """
     Applies mutation to an individual's genes with a given mutation rate.
     """
@@ -211,23 +211,30 @@ def mutate(individual, mutation_rate, percent_drop_bounds, long_mean_bounds, sho
         # Mutate short_mean (index 2)
         mutated_individual[2] = random.randint(short_mean_bounds[0], short_mean_bounds[1])
 
+    if random.random() < mutation_rate:
+        # Mutate percent_drop (index 0)
+        mutated_individual[3] = random.uniform(allowance_rate_bounds[0], allowance_rate_bounds[1])
+
+
     # Convert back to tuple and enforce bounds/constraints
     return enforce_bounds_and_constraints(
-        (float(mutated_individual[0]), int(mutated_individual[1]), int(mutated_individual[2])),
-        percent_drop_bounds, long_mean_bounds, short_mean_bounds
+        (float(mutated_individual[0]), int(mutated_individual[1]), int(mutated_individual[2]),float(mutated_individual[3])),
+        percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds
     )
 
-def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
+def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds):
     """
     Ensures that individual parameters stay within their defined bounds
     and satisfy the long_mean > short_mean constraint.
     """
-    p_drop, l_mean, s_mean = individual
+    p_drop, l_mean, s_mean , a_rate = individual
 
     # Enforce numerical bounds
     p_drop = max(percent_drop_bounds[0], min(p_drop, percent_drop_bounds[1]))
     l_mean = max(long_mean_bounds[0], min(l_mean, long_mean_bounds[1]))
     s_mean = max(short_mean_bounds[0], min(s_mean, short_mean_bounds[1]))
+    a_rate = max(allowance_rate_bounds[0], min(a_rate, allowance_rate_bounds[1]))
+
 
     # Enforce long_mean > short_mean constraint
     # If the constraint is violated, try to adjust s_mean or l_mean
@@ -250,7 +257,7 @@ def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bo
                 s_mean = min(s_mean, l_mean - 1) # s_mean must be at least 1
                 s_mean = max(1, s_mean) # ensure s_mean is not less than 1
 
-    return (p_drop, l_mean, s_mean)
+    return (p_drop, l_mean, s_mean, a_rate)
 
 
 def genetic_algorithm_optimization(
