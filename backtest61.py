@@ -112,8 +112,13 @@ def trade_simulation(params):
     # Run the simulation
     buy_dates, buy_performance, buy_values, xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate )
 
-    final_value = xdata['portfolio_value'].iloc[-1]
-    investment  = xdata['invested_value'].iloc[-1]
+    # final_value = xdata['portfolio_value'].iloc[-1]
+    # investment  = xdata['invested_value'].iloc[-1]
+
+    final_value = np.mean(xdata['portfolio_value'].iloc[-10:-1])
+    investment  = np.mean(xdata['invested_value'].iloc[-10:-1])
+
+
 
     # Calculate final performance
     performance = (final_value - investment) / investment if investment > 0 else 0
@@ -376,15 +381,15 @@ if __name__ == "__main__":
     print("Data download complete. Starting genetic algorithm optimization...")
 
     # Define genetic algorithm parameters and bounds
-    POPULATION_SIZE = 50
-    GENERATIONS     = 20
+    POPULATION_SIZE = 100
+    GENERATIONS     = 50
     MUTATION_RATE   = 0.1
-    ELITISM_COUNT   = 2 # Keep the top 2 individuals
+    ELITISM_COUNT   = 0 # Keep the top 2 individuals
 
     percent_drop_bounds = [0.0, 1.5]
     long_mean_bounds = [8, 90]
     short_mean_bounds = [8, 30]
-    allowance_rate_bounds = [0.0, 1.0]
+    allowance_rate_bounds = [0.1, 1.0]
 
 
     # Run the genetic algorithm
@@ -404,6 +409,7 @@ if __name__ == "__main__":
     print(f"Optimal percent_drop: {best_params[0]:.2f}")
     print(f"Optimal long_mean: {best_params[1]}")
     print(f"Optimal short_mean: {best_params[2]}")
+    print(f"Optimal allowance_rate: {best_params[3]}")
     print(f"Maximized Return (from negative fitness): {-best_fitness:.2f}%")
 
     # Visualize the best strategy found
