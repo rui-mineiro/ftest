@@ -384,7 +384,7 @@ if __name__ == "__main__":
     POPULATION_SIZE = 100
     GENERATIONS     = 100
     MUTATION_RATE   = 0.1
-    ELITISM_COUNT   = 2 # Keep the top 2 individuals
+    ELITISM_COUNT   = 0 # Keep the top 2 individuals
 
     percent_drop_bounds = [0.0, 1.5]
     long_mean_bounds = [8, 90]
