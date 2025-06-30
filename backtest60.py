@@ -49,7 +49,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
         if len(buy_dates) > 0:
             is_more_than_one_month = abs(today - buy_dates[-1]) > timedelta(days=30)
             if is_more_than_one_month:
-                cash_available += 100
+                cash_available += 200
 
         # Calculate long and short moving averages
         # Ensure sufficient data exists for the moving averages
@@ -366,9 +366,9 @@ if __name__ == "__main__":
 
     # Define genetic algorithm parameters and bounds
     POPULATION_SIZE = 50
-    GENERATIONS     = 5
+    GENERATIONS     = 50
     MUTATION_RATE   = 0
-    ELITISM_COUNT   = 1 # Keep the top 2 individuals
+    ELITISM_COUNT   = 2 # Keep the top 2 individuals
 
     percent_drop_bounds = [0.0, 1.5]
     long_mean_bounds = [8, 60]
