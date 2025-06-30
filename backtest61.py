@@ -19,7 +19,7 @@ def init_worker(worker_data):
     global global_data_for_workers
     global_data_for_workers = worker_data
 
-def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
+def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate ):
     """
     Simulates the ETF trading strategy based on the given parameters.
     Accessed globally shared data for efficiency in multiprocessing.
@@ -101,7 +101,7 @@ def trade_simulation(params):
     It takes a tuple of parameters and returns the negative of the final performance.
     Lower values indicate better performance (since we are minimizing).
     """
-    percent_drop, long_mean, short_mean = params
+    percent_drop, long_mean, short_mean , allowance_rate = params
 
     # Constraint: long_mean must be strictly greater than short_mean
     # Also, ensure short_mean is at least 1 (to have a valid mean)
@@ -110,7 +110,7 @@ def trade_simulation(params):
         return 1e10 # A very large number representing a bad fitness
 
     # Run the simulation
-    buy_dates, buy_performance, buy_values, xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean )
+    buy_dates, buy_performance, buy_values, xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate )
 
     final_value = xdata['portfolio_value'].iloc[-1]
     investment  = xdata['invested_value'].iloc[-1]
@@ -124,7 +124,7 @@ def trade_simulation(params):
 
 # --- Genetic Algorithm Components ---
 
-def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
+def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds):
     """
     Creates an initial random population of individuals.
     Each individual is a tuple (percent_drop, long_mean, short_mean).
@@ -136,6 +136,7 @@ def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short
             p_drop = random.uniform(percent_drop_bounds[0], percent_drop_bounds[1])
             l_mean = random.randint(long_mean_bounds[0], long_mean_bounds[1])
             s_mean = random.randint(short_mean_bounds[0], short_mean_bounds[1])
+            a_rate = random.uniform(allowance_rate_bounds[0], allowance_rate_bounds[1])
 
             # Ensure long_mean > short_mean and short_mean >= 1
             if 1 <= s_mean < l_mean:
@@ -276,7 +277,7 @@ def genetic_algorithm_optimization(
     """
     # Initialize multiprocessing pool, passing data to each worker
     with multiprocessing.Pool(multiprocessing.cpu_count(), initializer=init_worker, initargs=(data_for_workers,)) as pool:
-        population = initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds)
+        population = initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds)
         best_overall_individual = None
         best_overall_fitness = float('inf') # Initialize with a very high value for minimization
 
@@ -312,22 +313,22 @@ def genetic_algorithm_optimization(
                 parents = select_parents(population, fitnesses, num_parents_to_select=2)
 
                 # Perform crossover
-                child1, child2 = crossover(parents[0], parents[1], percent_drop_bounds, long_mean_bounds, short_mean_bounds)
+                child1, child2 = crossover(parents[0], parents[1], percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds)
 
                 # Apply mutation and add to new population
-                new_population.append(mutate(child1, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds))
+                new_population.append(mutate(child1, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds))
                 if len(new_population) < pop_size:
-                    new_population.append(mutate(child2, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds))
+                    new_population.append(mutate(child2, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds))
 
             population = new_population[:pop_size] # Ensure population size remains constant
 
         return best_overall_individual, best_overall_fitness
 
-def strategy_simulate(data, percent_drop , long_mean , short_mean ):
+def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_rate):
     """
     Visualizes the performance of the trading strategy with the given parameters.
     """
-    buy_dates , buy_performance , buy_values , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean )
+    buy_dates , buy_performance , buy_values , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
 
     # Plot portfolio percentage return over time
     plt.figure(figsize=(12, 6))
@@ -375,6 +376,8 @@ if __name__ == "__main__":
     percent_drop_bounds = [0.0, 1.5]
     long_mean_bounds = [8, 60]
     short_mean_bounds = [8, 30]
+    allowance_rate_bounds = [0.0, 1.0]
+
 
     # Run the genetic algorithm
     best_params, best_fitness = genetic_algorithm_optimization(
@@ -383,6 +386,7 @@ if __name__ == "__main__":
         percent_drop_bounds=percent_drop_bounds,
         long_mean_bounds=long_mean_bounds,
         short_mean_bounds=short_mean_bounds,
+        allowance_rate_bounds=allowance_rate_bounds,
         data_for_workers=original_data, # This is now correctly placed
         mutation_rate=MUTATION_RATE,
         elitism_count=ELITISM_COUNT
