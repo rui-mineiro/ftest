@@ -259,6 +259,7 @@ def genetic_algorithm_optimization(
     percent_drop_bounds,
     long_mean_bounds,
     short_mean_bounds,
+    allowance_rate_bounds,
     data_for_workers, # Moved this non-default argument before default ones
     mutation_rate=0.1,
     elitism_count=1
