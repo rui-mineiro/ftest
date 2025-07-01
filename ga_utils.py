@@ -346,6 +346,25 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
     init_worker(data)
     buy_dates , buy_performance , buy_values , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
 
+    fig, ax1 = plt.subplots()
+
+    ax1.set_xlabel('Date')
+    ax1.set_ylabel('Portfolio Value', color='tab:blue')
+    ax1.plot(xdata.index, xdata['portfolio_value'], label='Portfolio Value', color='tab:blue')
+    ax1.plot(xdata.index, xdata['invested_value'],  label='Invested_value', color='tab:cyan')
+    
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+
+    ax2 = ax1.twinx()  # Instantiate a second axes that shares the same x-axis
+
+    ax2.set_ylabel('Shares', color='tab:red')  # We already handled the x-label
+    ax2.plot(xdata.index, xdata['shares'], label='Shares', color='tab:red')
+    ax2.tick_params(axis='y', labelcolor='tab:red')
+
+    fig.tight_layout()
+
+
+
     # Plot portfolio percentage return over time
     plt.figure(figsize=(12, 6))
     plt.plot(xdata.index, xdata['portfolio_pct'], label=f'Final Return')
@@ -361,7 +380,8 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
 
     # Plot portfolio accumulated value over time
     plt.figure(figsize=(12, 6))
-    plt.plot(xdata.index, xdata['portfolio_value'], label=f'Investment Value')
+    plt.plot(xdata.index, xdata['portfolio_value'], label=f'Portfolio Value')
+    plt.plot(xdata.index, xdata['invested_value'],  label=f'Investment Value')
     plt.scatter(buy_dates, buy_values, color='red', marker='o', label='Share Purchase', zorder=5)
     plt.xlabel('Date')
     plt.ylabel('Accumulated Value')

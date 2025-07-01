@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # Define genetic algorithm parameters and bounds
     POPULATION_SIZE = 50
-    GENERATIONS     = 2
+    GENERATIONS     = 1
     MUTATION_RATE   = 0.5
     ELITISM_COUNT   = 1 # Keep the top 2 individuals
 
@@ -52,6 +52,7 @@ if __name__ == "__main__":
     print(f"Optimal percent_drop: {best_params[0]:.2f}")
     print(f"Optimal long_mean: {best_params[1]}")
     print(f"Optimal short_mean: {best_params[2]}")
+    print(f"Optimal allowance_rate: {best_params[3]:.2f}")
     print(f"Maximized Return (from negative fitness): {-best_fitness:.2f}%")
 
     # Visualize the best strategy found
