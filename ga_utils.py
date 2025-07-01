@@ -286,7 +286,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
         bought = False
 
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
-        if ((price_long_mean - price_short_mean < percent_drop) and (cash_available >= 0)):
+        if ((price_long_mean - price_short_mean < percent_drop) and (cash_available >= 0))  :
             qty = 100 // price_today # Buy shares worth approximately 100 units of currency
             if qty > 0:
                 cost = qty * price_today
@@ -309,8 +309,6 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
             buy_dates.append(today)
             buy_performance.append(today_pct)
             buy_values.append(investment)
-            if abs(today - buy_dates[-1]) > timedelta(days=30):
-                cash_available += initial_cash*allowance_rate
 
     return buy_dates, buy_performance, buy_values, local_data
 
