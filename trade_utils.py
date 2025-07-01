@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import multiprocessing
 import random
 from datetime import datetime, timedelta
-import ga_utils
+
 
 
 

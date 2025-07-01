@@ -4,8 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import multiprocessing
 import random
-import ga_utils
-import trade_utils
+from ga_utils import *
+# from trade_utils import *
 from datetime import datetime, timedelta
 
 # --- Global data for multiprocessing ---
@@ -57,5 +57,5 @@ if __name__ == "__main__":
     # Visualize the best strategy found
     print("\nGenerating strategy simulation plots...")
     global_data_for_workers = original_data
-    strategy_simulate(original_data, best_params[0], best_params[1], best_params[2])
+    strategy_simulate(original_data, best_params[0], best_params[1], best_params[2], best_params[3])
     print("Plots generated successfully.")
