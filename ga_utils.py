@@ -257,6 +257,8 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
     buy_dates = []
     buy_performance = []
     buy_values = []
+    is_more_than_one_month=False
+
 
     for i in range(1, len(local_data)):
         today = local_data.index[i]
@@ -284,7 +286,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
         bought = False
 
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
-        if (price_long_mean - price_short_mean < percent_drop) and (cash_available >= 0):
+        if ((price_long_mean - price_short_mean < percent_drop or is_more_than_one_month) and cash_available >= 0):
             qty = 100 // price_today # Buy shares worth approximately 100 units of currency
             if qty > 0:
                 cost = qty * price_today
@@ -344,22 +346,27 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
     Visualizes the performance of the trading strategy with the given parameters.
     """
     init_worker(data)
-    buy_dates , buy_performance , buy_values , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
+    buy_dates   , buy_performance   , buy_values   , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
+    init_worker(data)
+    buy_dates_y , buy_performance_y , buy_values_y , ydata = etf_ticker_simulation( -999 , 5 , 2 , 0.1 )
 
-    fig, ax1 = plt.subplots()
 
-    ax1.set_xlabel('Date')
-    ax1.set_ylabel('Portfolio Value', color='tab:blue')
-    ax1.plot(xdata.index, xdata['portfolio_value'], label='Portfolio Value', color='tab:blue')
-    ax1.plot(xdata.index, xdata['invested_value'],  label='Invested_value', color='tab:cyan')
+
+
+    fig,  (ax11, ax21)  = plt.subplots(2)
+
+    ax11.set_xlabel('Date')
+    ax11.set_ylabel('Portfolio Value', color='tab:blue')
+    ax11.plot(xdata.index, xdata['portfolio_value'], label='Portfolio Value'          , color='tab:blue')
+    ax11.plot(ydata.index, ydata['portfolio_value'], label='Portfolio Value Reference', color='tab:green')
+    ax11.plot(xdata.index, xdata['invested_value'],  label='Invested_value', color='tab:cyan')
     
-    ax1.tick_params(axis='y', labelcolor='tab:blue')
 
-    ax2 = ax1.twinx()  # Instantiate a second axes that shares the same x-axis
+    ax12 = ax11.twinx()  # Instantiate a second axes that shares the same x-axis
 
-    ax2.set_ylabel('Shares', color='tab:red')  # We already handled the x-label
-    ax2.plot(xdata.index, xdata['shares'], label='Shares', color='tab:red')
-    ax2.tick_params(axis='y', labelcolor='tab:red')
+    ax12.set_ylabel('Shares', color='tab:red')  # We already handled the x-label
+    ax12.plot(xdata.index, xdata[etf_ticker], label='Share Price', color='tab:red')
+    ax12.tick_params(axis='y', labelcolor='tab:red')
 
     fig.tight_layout()
 
