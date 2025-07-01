@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # Define genetic algorithm parameters and bounds
     POPULATION_SIZE = 50
-    GENERATIONS     = 5
+    GENERATIONS     = 2
     MUTATION_RATE   = 0.5
     ELITISM_COUNT   = 1 # Keep the top 2 individuals
 
@@ -56,6 +56,5 @@ if __name__ == "__main__":
 
     # Visualize the best strategy found
     print("\nGenerating strategy simulation plots...")
-    global_data_for_workers = original_data
     strategy_simulate(original_data, best_params[0], best_params[1], best_params[2], best_params[3])
     print("Plots generated successfully.")

@@ -343,6 +343,7 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
     """
     Visualizes the performance of the trading strategy with the given parameters.
     """
+    init_worker(data)
     buy_dates , buy_performance , buy_values , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
 
     # Plot portfolio percentage return over time
