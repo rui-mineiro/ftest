@@ -24,8 +24,8 @@ if __name__ == "__main__":
     print("Data download complete. Starting genetic algorithm optimization...")
 
     # Define genetic algorithm parameters and bounds
-    POPULATION_SIZE = 15
-    GENERATIONS     = 20
+    POPULATION_SIZE = 100
+    GENERATIONS     = 100
     MUTATION_RATE   = 0.3
     ELITISM_COUNT   = 3 # Keep the top 2 individuals
 

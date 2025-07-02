@@ -257,7 +257,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
     buy_dates = []
     buy_performance = []
     buy_values = []
-    is_more_than_one_month=False
+    is_more_than_one_month=True
 
 
     for i in range(1, len(local_data)):
@@ -358,7 +358,7 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
     init_worker(data)
     buy_dates   , buy_performance   , buy_values   , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
     init_worker(data)
-    buy_dates_y , buy_performance_y , buy_values_y , ydata = etf_ticker_simulation( 999 , 5 , 2 , 0.1 )
+    buy_dates_y , buy_performance_y , buy_values_y , ydata = etf_ticker_simulation( -999 , 5 , 2 , 0.1 )
 
 
 
