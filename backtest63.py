@@ -24,15 +24,15 @@ if __name__ == "__main__":
     print("Data download complete. Starting genetic algorithm optimization...")
 
     # Define genetic algorithm parameters and bounds
-    POPULATION_SIZE = 100
-    GENERATIONS     = 100
-    MUTATION_RATE   = 0.3
-    ELITISM_COUNT   = 3 # Keep the top 2 individuals
+    POPULATION_SIZE = 4*8
+    GENERATIONS     = 10
+    MUTATION_RATE   = 0.1
+    ELITISM_COUNT   = 2 # Keep the top 2 individuals
 
     percent_drop_bounds = [0.0, 1.5]
-    long_mean_bounds = [8, 120]
-    short_mean_bounds = [8, 30]
-    allowance_rate_bounds = [0.05, 0.2]
+    long_mean_bounds = [30, 120]
+    short_mean_bounds = [5, 90]
+    allowance_rate_bounds = [0, 1]
 
 
     # Run the genetic algorithm
@@ -48,12 +48,7 @@ if __name__ == "__main__":
         elitism_count=ELITISM_COUNT
     )
 
-    print("\n--- Optimization Complete ---")
-    print(f"Optimal percent_drop: {best_params[0]:.2f}")
-    print(f"Optimal long_mean: {best_params[1]}")
-    print(f"Optimal short_mean: {best_params[2]}")
-    print(f"Optimal allowance_rate: {best_params[3]:.2f}")
-    print(f"Maximized Return (from negative fitness): {-best_fitness:.2f}%")
+
 
     # Visualize the best strategy found
     print("\nGenerating strategy simulation plots...")

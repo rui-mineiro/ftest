@@ -245,7 +245,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
 
     investment = 0
     shares = 0
-    initial_cash   = 1000          # Initial cash
+    initial_cash   = 200           # Initial cash
     cash_available = initial_cash  # Initial cash
 
     # Initialize columns for simulation results
@@ -288,7 +288,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
         if (cash_available >= 0):
             if (price_long_mean - price_short_mean < percent_drop):
-                qty = 100 // price_today # Buy shares worth approximately 100 units of currency
+                qty = initial_cash / 2 // price_today # Buy shares worth approximately 100 units of currency
                 if qty > 0:
                     cost = qty * price_today
                     shares += qty
@@ -344,10 +344,12 @@ def trade_simulation(params):
     investment  = xdata['invested_value'].iloc[-1]
 
     # Calculate final performance
-    performance = (final_value - investment) / investment if investment > 0 else 0
+    # performance = (final_value - investment) / investment if investment > 0 else 0
+    performance = final_value / investment if investment > 0 else 0
+
 
     # Return negative performance for minimization (maximizing return)
-    return -round(performance * 100, 2)
+    return -round(np.sum(xdata['portfolio_pct']), 2)
 
 
 
@@ -355,10 +357,24 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
     """
     Visualizes the performance of the trading strategy with the given parameters.
     """
+    print("\n--- Optimization Complete ---")
+    print(f"Optimal percent_drop: {percent_drop:.2f}")
+    print(f"Optimal long_mean: {long_mean}")
+    print(f"Optimal short_mean: {short_mean}")
+    print(f"Optimal allowance_rate: {allowance_rate:.2f}")
+    
+    
+
+
     init_worker(data)
     buy_dates   , buy_performance   , buy_values   , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
+    print(f"Maximized Return (from negative fitness): {xdata['portfolio_pct'].iloc[-1]:.2f}%")
+
     init_worker(data)
     buy_dates_y , buy_performance_y , buy_values_y , ydata = etf_ticker_simulation( -999 , 5 , 2 , 0.1 )
+    print(f"Maximized Return Reference (from negative fitness): {ydata['portfolio_pct'].iloc[-1]:.2f}%")
+
+
 
 
 
