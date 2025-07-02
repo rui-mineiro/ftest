@@ -17,7 +17,7 @@ etf_ticker = 'SPPW.DE'
 if __name__ == "__main__":
     print(f"Downloading ETF data for {etf_ticker}...")
     # Download data once  
-    original_data = yf.download(etf_ticker , start='2019-02-26' , end='2025-06-27' ,  auto_adjust=False)
+    original_data = yf.download(etf_ticker , start='2020-07-26' , end='2025-06-27' ,  auto_adjust=False)
     original_data = original_data['Adj Close'].dropna()
     original_data.name = etf_ticker # Name the series for easier access
 
@@ -25,9 +25,9 @@ if __name__ == "__main__":
 
     # Define genetic algorithm parameters and bounds
     POPULATION_SIZE = 15
-    GENERATIONS     = 1
-    MUTATION_RATE   = 0.5
-    ELITISM_COUNT   = 1 # Keep the top 2 individuals
+    GENERATIONS     = 20
+    MUTATION_RATE   = 0.3
+    ELITISM_COUNT   = 3 # Keep the top 2 individuals
 
     percent_drop_bounds = [0.0, 1.5]
     long_mean_bounds = [8, 120]
@@ -59,3 +59,4 @@ if __name__ == "__main__":
     print("\nGenerating strategy simulation plots...")
     strategy_simulate(original_data, best_params[0], best_params[1], best_params[2], best_params[3])
     print("Plots generated successfully.")
+

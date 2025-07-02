@@ -286,14 +286,24 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
         bought = False
 
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
-        if ((price_long_mean - price_short_mean < percent_drop) and (cash_available >= 0))  :
-            qty = 100 // price_today # Buy shares worth approximately 100 units of currency
-            if qty > 0:
-                cost = qty * price_today
-                shares += qty
-                cash_available -= cost
-                investment += cost
-                bought = True
+        if (cash_available >= 0):
+            if (price_long_mean - price_short_mean < percent_drop):
+                qty = 100 // price_today # Buy shares worth approximately 100 units of currency
+                if qty > 0:
+                    cost = qty * price_today
+                    shares += qty
+                    cash_available -= cost
+                    investment += cost
+                    bought = True
+            if is_more_than_one_month and not bought:
+                qty=cash_available // price_today
+                if qty > 0:
+                    cost = qty * price_today
+                    shares += qty
+                    cash_available -= cost
+                    investment += cost
+                    bought = True
+
 
         # Update daily portfolio performance
         today_value = shares * price_today
@@ -348,7 +358,7 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
     init_worker(data)
     buy_dates   , buy_performance   , buy_values   , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
     init_worker(data)
-    buy_dates_y , buy_performance_y , buy_values_y , ydata = etf_ticker_simulation( -999 , 5 , 2 , 0.1 )
+    buy_dates_y , buy_performance_y , buy_values_y , ydata = etf_ticker_simulation( 999 , 5 , 2 , 0.1 )
 
 
 
@@ -357,45 +367,63 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
 
     ax11.set_xlabel('Date')
     ax11.set_ylabel('Portfolio Value', color='tab:blue')
-    ax11.plot(xdata.index, xdata['portfolio_value'], label='Portfolio Value'          , color='tab:blue')
+    ax11.plot(xdata.index, xdata['portfolio_value'], label='Portfolio Value' , color='tab:blue')
+    ax11.plot(xdata.index, xdata['invested_value'],  label='Invested_value'  , color='tab:blue')
     ax11.plot(ydata.index, ydata['portfolio_value'], label='Portfolio Value Reference', color='tab:green')
-    ax11.plot(xdata.index, xdata['invested_value'],  label='Invested_value', color='tab:cyan')
+    ax11.plot(ydata.index, ydata['invested_value'],  label='Invested_value  Reference', color='tab:green')
+    ax11.legend()
+    ax11.grid(True)
+
     
 
     ax12 = ax11.twinx()  # Instantiate a second axes that shares the same x-axis
-
     ax12.set_ylabel('Shares', color='tab:red')  # We already handled the x-label
     ax12.plot(xdata.index, xdata[etf_ticker], label='Share Price', color='tab:red')
     ax12.tick_params(axis='y', labelcolor='tab:red')
+    ax12.legend(loc='lower right')
+    # ax12.grid(True)
 
-    fig.tight_layout()
 
+    ax21.set_xlabel('Date')
+    ax21.set_ylabel('Portfolio Performance (%)', color='tab:blue')
+    ax21.plot(xdata.index, xdata['portfolio_pct'], label='Portfolio Performance (%)'          , color='tab:blue')
+    ax21.plot(ydata.index, ydata['portfolio_pct'], label='Portfolio Performance Reference(%)' , color='tab:green')
+    ax21.legend()
+    ax21.grid(True)
 
-
-    # Plot portfolio percentage return over time
-    plt.figure(figsize=(12, 6))
-    plt.plot(xdata.index, xdata['portfolio_pct'], label=f'Final Return')
-    plt.scatter(buy_dates, buy_performance, color='red', marker='o', label='Share Purchase', zorder=5)
-    plt.xlabel('Date')
-    plt.ylabel('Performance (%)')
-    plt.title(f'Portfolio Performance ({etf_ticker}) with Optimal Strategy')
-    plt.axhline(0, color='gray', linestyle='--', linewidth=0.8)
-    plt.grid(True)
-    plt.legend()
     plt.tight_layout()
     plt.show()
 
-    # Plot portfolio accumulated value over time
-    plt.figure(figsize=(12, 6))
-    plt.plot(xdata.index, xdata['portfolio_value'], label=f'Portfolio Value')
-    plt.plot(xdata.index, xdata['invested_value'],  label=f'Investment Value')
-    plt.scatter(buy_dates, buy_values, color='red', marker='o', label='Share Purchase', zorder=5)
-    plt.xlabel('Date')
-    plt.ylabel('Accumulated Value')
-    plt.title(f'Accumulated Investment Value ({etf_ticker}) with Optimal Strategy')
-    plt.axhline(0, color='gray', linestyle='--', linewidth=0.8)
-    plt.grid(True)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+
+
+#    fig.tight_layout()
+#
+#
+#
+#    # Plot portfolio percentage return over time
+#    plt.figure(figsize=(12, 6))
+#    plt.plot(xdata.index, xdata['portfolio_pct'], label=f'Final Return')
+#    plt.scatter(buy_dates, buy_performance, color='red', marker='o', label='Share Purchase', zorder=5)
+#    plt.xlabel('Date')
+#    plt.ylabel('Performance (%)')
+#    plt.title(f'Portfolio Performance ({etf_ticker}) with Optimal Strategy')
+#    plt.axhline(0, color='gray', linestyle='--', linewidth=0.8)
+#    plt.grid(True)
+#    plt.legend()
+#    plt.tight_layout()
+#    plt.show()
+#
+#    # Plot portfolio accumulated value over time
+#    plt.figure(figsize=(12, 6))
+#    plt.plot(xdata.index, xdata['portfolio_value'], label=f'Portfolio Value')
+#    plt.plot(xdata.index, xdata['invested_value'],  label=f'Investment Value')
+#    plt.scatter(buy_dates, buy_values, color='red', marker='o', label='Share Purchase', zorder=5)
+#    plt.xlabel('Date')
+#    plt.ylabel('Accumulated Value')
+#    plt.title(f'Accumulated Investment Value ({etf_ticker}) with Optimal Strategy')
+#    plt.axhline(0, color='gray', linestyle='--', linewidth=0.8)
+#    plt.grid(True)
+#    plt.legend()
+#    plt.tight_layout()
+#    plt.show()
 
