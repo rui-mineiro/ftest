@@ -352,8 +352,8 @@ def trade_simulation(params):
     performance = final_value / investment if investment > 0 else 0
 
 
-#    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
-    xpto=np.sum(global_data_for_workers_reference['portfolio_pct']-xdata['portfolio_pct'])
+    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
+#    xpto=np.sum(global_data_for_workers_reference['portfolio_pct']-xdata['portfolio_pct'])
 
 
     # Return negative performance for minimization (maximizing return)
