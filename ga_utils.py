@@ -23,7 +23,7 @@ def init_worker(worker_data):
     global_data_for_workers = worker_data
 
     global global_data_for_workers_reference
-    _ , _ , _ , global_data_for_workers_reference = etf_ticker_simulation( -999 , 5 , 2 , 0.1 )
+    _ , _ , _ , global_data_for_workers_reference = etf_ticker_simulation( -999 , 5 , 2 , 1 )
 
 # --- Genetic Algorithm Components ---
 
@@ -272,7 +272,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
         if len(buy_dates) > 0:
             is_more_than_one_month = abs(today - buy_dates[-1]) > timedelta(days=30)
             if is_more_than_one_month:
-                cash_available += initial_cash*allowance_rate
+                cash_available += initial_cash*(1+allowance_rate)
 
 
         # Calculate long and short moving averages
@@ -291,7 +291,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
 
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
         if (cash_available >= 0):
-            if (price_long_mean - price_short_mean < percent_drop):
+            if ((price_short_mean - price_long_mean)/price_long_mean) < percent_drop:
                 qty = initial_cash / 1 // price_today # Buy shares worth approximately 100 units of currency
                 if qty > 0:
                     cost = qty * price_today
@@ -352,7 +352,8 @@ def trade_simulation(params):
     performance = final_value / investment if investment > 0 else 0
 
 
-    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
+#    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
+    xpto=np.sum(global_data_for_workers_reference['portfolio_pct']-xdata['portfolio_pct'])
 
 
     # Return negative performance for minimization (maximizing return)
