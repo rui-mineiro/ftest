@@ -349,7 +349,7 @@ def trade_simulation(params):
 
 
     # Return negative performance for minimization (maximizing return)
-    return -round(np.sum(xdata['portfolio_pct']), 2)
+    return -round(np.sum(xdata['portfolio_value']), 2)
 
 
 
