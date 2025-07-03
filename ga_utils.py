@@ -10,7 +10,8 @@ from datetime import datetime, timedelta
 
 # --- Global data for multiprocessing ---
 # This variable will be set in each worker process when the pool is initialized
-global_data_for_workers = None
+global_data_for_workers           = None
+global_data_for_workers_reference = None
 etf_ticker = 'SPPW.DE'
 
 def init_worker(worker_data):
@@ -20,6 +21,9 @@ def init_worker(worker_data):
     """
     global global_data_for_workers
     global_data_for_workers = worker_data
+
+    global global_data_for_workers_reference
+    _ , _ , _ , global_data_for_workers_reference = etf_ticker_simulation( -999 , 5 , 2 , 0.1 )
 
 # --- Genetic Algorithm Components ---
 
@@ -245,7 +249,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
 
     investment = 0
     shares = 0
-    initial_cash   = 200           # Initial cash
+    initial_cash   = 100           # Initial cash
     cash_available = initial_cash  # Initial cash
 
     # Initialize columns for simulation results
@@ -348,8 +352,11 @@ def trade_simulation(params):
     performance = final_value / investment if investment > 0 else 0
 
 
+    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
+
+
     # Return negative performance for minimization (maximizing return)
-    return -round(np.sum(xdata['portfolio_value']), 2)
+    return round(xpto, 2)
 
 
 
@@ -368,13 +375,10 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
 
     init_worker(data)
     buy_dates   , buy_performance   , buy_values   , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
-    print(f"Maximized Return (from negative fitness): {xdata['portfolio_pct'].iloc[-1]:.2f}%")
+    print(f"Maximized Return : {xdata['portfolio_pct'].iloc[-1]:.2f}%")
 
-    init_worker(data)
-    buy_dates_y , buy_performance_y , buy_values_y , ydata = etf_ticker_simulation( -999 , 5 , 2 , 0.1 )
-    print(f"Maximized Return Reference (from negative fitness): {ydata['portfolio_pct'].iloc[-1]:.2f}%")
-
-
+    ydata=global_data_for_workers_reference.copy()
+    print(f"Maximized Return Reference: {ydata['portfolio_pct'].iloc[-1]:.2f}%")
 
 
 
