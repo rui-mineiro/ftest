@@ -32,7 +32,6 @@ if __name__ == "__main__":
     percent_drop_bounds = [-1.5, 1.5]
     long_mean_bounds = [-120 , 120]
     short_mean_bounds = [60 , 60]
-#    allowance_rate_bounds = [1, 10]
 
 
     # Run the genetic algorithm
@@ -42,7 +41,6 @@ if __name__ == "__main__":
         percent_drop_bounds=percent_drop_bounds,
         long_mean_bounds=long_mean_bounds,
         short_mean_bounds=short_mean_bounds,
-#        allowance_rate_bounds=allowance_rate_bounds,
         data_for_workers=original_data, # This is now correctly placed
         mutation_rate=MUTATION_RATE,
         elitism_count=ELITISM_COUNT
@@ -52,6 +50,6 @@ if __name__ == "__main__":
 
     # Visualize the best strategy found
     print("\nGenerating strategy simulation plots...")
-    strategy_simulate(original_data, best_params[0], best_params[1], best_params[2], best_params[3])
+    strategy_simulate(original_data, best_params[0], best_params[1], best_params[2])
     print("Plots generated successfully.")
 

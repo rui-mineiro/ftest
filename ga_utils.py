@@ -118,7 +118,7 @@ def mutate(individual, mutation_rate, percent_drop_bounds, long_mean_bounds, sho
 
     # Convert back to tuple and enforce bounds/constraints
     return enforce_bounds_and_constraints(
-        (float(mutated_individual[0]), int(mutated_individual[1]), int(mutated_individual[2]),float(mutated_individual[3])),
+        (float(mutated_individual[0]), int(mutated_individual[1]), int(mutated_individual[2])),
         percent_drop_bounds, long_mean_bounds, short_mean_bounds
     )
 
@@ -127,7 +127,7 @@ def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bo
     Ensures that individual parameters stay within their defined bounds
     and satisfy the long_mean > short_mean constraint.
     """
-    p_drop, l_mean, s_mean , a_rate = individual
+    p_drop, l_mean, s_mean  = individual
 
     # Enforce numerical bounds
     p_drop = max(percent_drop_bounds[0], min(p_drop, percent_drop_bounds[1]))
@@ -157,7 +157,7 @@ def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bo
                 s_mean = min(s_mean, l_mean - 1) # s_mean must be at least 1
                 s_mean = max(1, s_mean) # ensure s_mean is not less than 1
 
-    return (p_drop, l_mean, s_mean, a_rate)
+    return (p_drop, l_mean, s_mean)
 
 
 def genetic_algorithm_optimization(
