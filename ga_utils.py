@@ -239,7 +239,7 @@ def genetic_algorithm_optimization(
 
 
 
-def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate ):
+def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
     """
     Simulates the ETF trading strategy based on the given parameters.
     Accessed globally shared data for efficiency in multiprocessing.
@@ -333,7 +333,7 @@ def trade_simulation(params):
     It takes a tuple of parameters and returns the negative of the final performance.
     Lower values indicate better performance (since we are minimizing).
     """
-    percent_drop, long_mean, short_mean , allowance_rate = params
+    percent_drop, long_mean, short_mean  = params
 
     # Constraint: long_mean must be strictly greater than short_mean
     # Also, ensure short_mean is at least 1 (to have a valid mean)
@@ -342,7 +342,7 @@ def trade_simulation(params):
         return 1e10 # A very large number representing a bad fitness
 
     # Run the simulation
-    buy_dates, buy_performance, buy_values, xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate )
+    buy_dates, buy_performance, buy_values, xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean  )
 
     final_value = np.mean(xdata['portfolio_value'].iloc[-120:-1])
     investment  = xdata['invested_value'].iloc[-1]
@@ -361,7 +361,7 @@ def trade_simulation(params):
 
 
 
-def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_rate):
+def strategy_simulate(data, percent_drop , long_mean , short_mean ):
     """
     Visualizes the performance of the trading strategy with the given parameters.
     """
@@ -369,13 +369,13 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean , allowance_ra
     print(f"Optimal percent_drop: {percent_drop:.2f}")
     print(f"Optimal long_mean: {long_mean}")
     print(f"Optimal short_mean: {short_mean}")
-    print(f"Optimal allowance_rate: {allowance_rate:.2f}")
+#    print(f"Optimal allowance_rate: {allowance_rate:.2f}")
     
     
 
 
     init_worker(data)
-    buy_dates   , buy_performance   , buy_values   , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate)
+    buy_dates   , buy_performance   , buy_values   , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean )
     print(f"Maximized Return : {xdata['portfolio_pct'].iloc[-1]:.2f}%")
 
     ydata=global_data_for_workers_reference.copy()
