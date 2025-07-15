@@ -292,7 +292,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean , allowance_rate
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
         qty=cash_available // price_today
         if qty > 0:
-            if is_more_than_one_month and not bought:
+            if is_more_than_one_month:
                 cost = qty * price_today
                 shares += qty
                 cash_available -= cost
