@@ -70,7 +70,7 @@ def select_parents(population, fitnesses, num_parents_to_select=2, tournament_si
         selected_parents.append(winner)
     return selected_parents
 
-def crossover(parent1, parent2, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds):
+def crossover(parent1, parent2, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
     """
     Performs one-point crossover between two parents to create two children.
     """
