@@ -41,7 +41,7 @@ def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short
             s_mean = random.randint(short_mean_bounds[0], short_mean_bounds[1])
 
             # Ensure long_mean > short_mean and short_mean >= 1
-            if 1 <= s_mean < l_mean:
+            if  s_mean < l_mean:
                 population.append((p_drop, l_mean, s_mean))
                 break # Valid individual generated, break inner loop
     return population
