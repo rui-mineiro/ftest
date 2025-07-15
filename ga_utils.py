@@ -224,12 +224,12 @@ def genetic_algorithm_optimization(
                 parents = select_parents(population, fitnesses, num_parents_to_select=2)
 
                 # Perform crossover
-                child1, child2 = crossover(parents[0], parents[1], percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds)
+                child1, child2 = crossover(parents[0], parents[1], percent_drop_bounds, long_mean_bounds, short_mean_bounds)
 
                 # Apply mutation and add to new population
-                new_population.append(mutate(child1, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds))
+                new_population.append(mutate(child1, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds))
                 if len(new_population) < pop_size:
-                    new_population.append(mutate(child2, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds))
+                    new_population.append(mutate(child2, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds))
 
             population = new_population[:pop_size] # Ensure population size remains constant
 
