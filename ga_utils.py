@@ -188,7 +188,7 @@ def genetic_algorithm_optimization(
     """
     # Initialize multiprocessing pool, passing data to each worker
     with multiprocessing.Pool(multiprocessing.cpu_count(), initializer=init_worker, initargs=(data_for_workers,)) as pool:
-        population = initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds)
+        population = initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds)
         best_overall_individual = None
         best_overall_fitness = float('inf') # Initialize with a very high value for minimization
 
