@@ -23,7 +23,7 @@ def init_worker(worker_data):
     global_data_for_workers = worker_data
 
     global global_data_for_workers_reference
-    _ , _ , _ , global_data_for_workers_reference = etf_ticker_simulation( -999 , 5 , 2 , 1 )
+    _ , _ , _ , global_data_for_workers_reference = etf_ticker_simulation( -999 , 5 , 2 )
 
 # --- Genetic Algorithm Components ---
 
