@@ -39,7 +39,6 @@ def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short
             p_drop = random.uniform(percent_drop_bounds[0], percent_drop_bounds[1])
             l_mean = random.randint(long_mean_bounds[0], long_mean_bounds[1])
             s_mean = random.randint(short_mean_bounds[0], short_mean_bounds[1])
-#            a_rate = random.uniform(allowance_rate_bounds[0], allowance_rate_bounds[1])
 
             # Ensure long_mean > short_mean and short_mean >= 1
             if 1 <= s_mean < l_mean:
@@ -85,17 +84,17 @@ def crossover(parent1, parent2, percent_drop_bounds, long_mean_bounds, short_mea
 
     # Ensure correct data types for children and enforce bounds/constraints
     child1 = enforce_bounds_and_constraints(
-        (float(child1[0]), int(child1[1]), int(child1[2]), float(child1[3])),
-        percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds
+        (float(child1[0]), int(child1[1]), int(child1[2])),
+        percent_drop_bounds, long_mean_bounds, short_mean_bounds
     )
     child2 = enforce_bounds_and_constraints(
-        (float(child2[0]), int(child2[1]), int(child2[2]), float(child2[3])),
-        percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds
+        (float(child2[0]), int(child2[1]), int(child2[2])),
+        percent_drop_bounds, long_mean_bounds, short_mean_bounds
     )
 
     return child1, child2
 
-def mutate(individual, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds):
+def mutate(individual, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
     """
     Applies mutation to an individual's genes with a given mutation rate.
     """
@@ -114,18 +113,16 @@ def mutate(individual, mutation_rate, percent_drop_bounds, long_mean_bounds, sho
         # Mutate short_mean (index 2)
         mutated_individual[2] = random.randint(short_mean_bounds[0], short_mean_bounds[1])
 
-    if random.random() < mutation_rate:
-        # Mutate percent_drop (index 0)
-        mutated_individual[3] = random.uniform(allowance_rate_bounds[0], allowance_rate_bounds[1])
+
 
 
     # Convert back to tuple and enforce bounds/constraints
     return enforce_bounds_and_constraints(
         (float(mutated_individual[0]), int(mutated_individual[1]), int(mutated_individual[2]),float(mutated_individual[3])),
-        percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds
+        percent_drop_bounds, long_mean_bounds, short_mean_bounds
     )
 
-def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds):
+def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
     """
     Ensures that individual parameters stay within their defined bounds
     and satisfy the long_mean > short_mean constraint.
@@ -136,7 +133,7 @@ def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bo
     p_drop = max(percent_drop_bounds[0], min(p_drop, percent_drop_bounds[1]))
     l_mean = max(long_mean_bounds[0], min(l_mean, long_mean_bounds[1]))
     s_mean = max(short_mean_bounds[0], min(s_mean, short_mean_bounds[1]))
-    a_rate = max(allowance_rate_bounds[0], min(a_rate, allowance_rate_bounds[1]))
+    
 
 
     # Enforce long_mean > short_mean constraint
@@ -169,7 +166,6 @@ def genetic_algorithm_optimization(
     percent_drop_bounds,
     long_mean_bounds,
     short_mean_bounds,
-#    allowance_rate_bounds,
     data_for_workers, # Moved this non-default argument before default ones
     mutation_rate=0.1,
     elitism_count=1
