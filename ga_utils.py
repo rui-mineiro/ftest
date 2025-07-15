@@ -27,7 +27,7 @@ def init_worker(worker_data):
 
 # --- Genetic Algorithm Components ---
 
-def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds, allowance_rate_bounds):
+def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds ):
     """
     Creates an initial random population of individuals.
     Each individual is a tuple (percent_drop, long_mean, short_mean).
@@ -39,11 +39,11 @@ def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short
             p_drop = random.uniform(percent_drop_bounds[0], percent_drop_bounds[1])
             l_mean = random.randint(long_mean_bounds[0], long_mean_bounds[1])
             s_mean = random.randint(short_mean_bounds[0], short_mean_bounds[1])
-            a_rate = random.uniform(allowance_rate_bounds[0], allowance_rate_bounds[1])
+#            a_rate = random.uniform(allowance_rate_bounds[0], allowance_rate_bounds[1])
 
             # Ensure long_mean > short_mean and short_mean >= 1
             if 1 <= s_mean < l_mean:
-                population.append((p_drop, l_mean, s_mean, a_rate))
+                population.append((p_drop, l_mean, s_mean))
                 break # Valid individual generated, break inner loop
     return population
 
