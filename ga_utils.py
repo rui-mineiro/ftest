@@ -357,7 +357,7 @@ def trade_simulation(params):
 
 
     # Return negative performance for minimization (maximizing return)
-    return round(xpto, 2)
+    return round(-final_value, 2)
 
 
 
