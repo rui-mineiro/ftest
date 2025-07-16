@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     percent_drop_bounds = [-1.5, 1.5]
     long_mean_bounds = [-120 , 120]
-    short_mean_bounds = [60 , 60]
+    short_mean_bounds = [-60 , 60]
 
 
     # Run the genetic algorithm
