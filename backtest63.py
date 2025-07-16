@@ -24,12 +24,12 @@ if __name__ == "__main__":
     print("Data download complete. Starting genetic algorithm optimization...")
 
     # Define genetic algorithm parameters and bounds
-    POPULATION_SIZE = 2*8
+    POPULATION_SIZE = 10*8
     GENERATIONS     = 5
     MUTATION_RATE   = 0.9
-    ELITISM_COUNT   = POPULATION_SIZE // 8 # Keep the top 2 individuals
+    ELITISM_COUNT   = 0 # Keep the top 2 individuals
 
-    percent_drop_bounds = [-1.5, 1.5]
+    percent_drop_bounds = [-3, 3]
     long_mean_bounds = [1 , 120]
     short_mean_bounds = [1 , 60]
 

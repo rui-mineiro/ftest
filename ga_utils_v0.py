@@ -283,7 +283,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
                 cash_available -= cost
                 investment += cost
                 bought = True
-            elif ((price_short_mean - price_long_mean)/price_long_mean)*100 < percent_drop and not bought:
+            elif ((price_short_mean - price_long_mean)/price_short_mean)*100 < percent_drop and not bought:
                 cash_available += initial_cash
                 qty=cash_available // price_today
                 cost = qty * price_today
