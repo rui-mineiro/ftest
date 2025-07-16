@@ -140,22 +140,9 @@ def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bo
     # If the constraint is violated, try to adjust s_mean or l_mean
     if not ( s_mean < l_mean):
         # Option 1: Re-randomize both means until valid (robust but might loop)
-        # while not (1 <= s_mean < l_mean):
-        #     l_mean = random.randint(long_mean_bounds[0], long_mean_bounds[1])
-        #     s_mean = random.randint(short_mean_bounds[0], short_mean_bounds[1])
-
-        # Option 2: Adjust them to the closest valid configuration (simpler)
-        # Ensure s_mean is at least 1
-#        s_mean = max(1, s_mean)
-        # If s_mean is still >= l_mean, increment l_mean or decrement s_mean
-        if s_mean >= l_mean:
-            # Try to make l_mean just larger than s_mean, within bounds
-            l_mean = max(l_mean, s_mean + 1)
-            # If l_mean goes out of its upper bound, adjust s_mean instead
-            if l_mean > long_mean_bounds[1]:
-                l_mean = long_mean_bounds[1]
-                s_mean = min(s_mean, l_mean - 1) # s_mean must be at least 1
-#                s_mean = max(1, s_mean) # ensure s_mean is not less than 1
+        while not ( s_mean < l_mean):
+            l_mean = random.randint(long_mean_bounds[0], long_mean_bounds[1])
+            s_mean = random.randint(short_mean_bounds[0], short_mean_bounds[1])
 
     return (p_drop, l_mean, s_mean)
 
