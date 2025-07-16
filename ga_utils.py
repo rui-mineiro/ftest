@@ -138,7 +138,7 @@ def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bo
 
     # Enforce long_mean > short_mean constraint
     # If the constraint is violated, try to adjust s_mean or l_mean
-    if not (1 <= s_mean < l_mean):
+    if not ( s_mean < l_mean):
         # Option 1: Re-randomize both means until valid (robust but might loop)
         # while not (1 <= s_mean < l_mean):
         #     l_mean = random.randint(long_mean_bounds[0], long_mean_bounds[1])
@@ -146,7 +146,7 @@ def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bo
 
         # Option 2: Adjust them to the closest valid configuration (simpler)
         # Ensure s_mean is at least 1
-        s_mean = max(1, s_mean)
+#        s_mean = max(1, s_mean)
         # If s_mean is still >= l_mean, increment l_mean or decrement s_mean
         if s_mean >= l_mean:
             # Try to make l_mean just larger than s_mean, within bounds
@@ -155,7 +155,7 @@ def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bo
             if l_mean > long_mean_bounds[1]:
                 l_mean = long_mean_bounds[1]
                 s_mean = min(s_mean, l_mean - 1) # s_mean must be at least 1
-                s_mean = max(1, s_mean) # ensure s_mean is not less than 1
+#                s_mean = max(1, s_mean) # ensure s_mean is not less than 1
 
     return (p_drop, l_mean, s_mean)
 
@@ -351,7 +351,7 @@ def trade_simulation(params):
 
     # Constraint: long_mean must be strictly greater than short_mean
     # Also, ensure short_mean is at least 1 (to have a valid mean)
-    if not (1 <= short_mean < long_mean):
+    if not (short_mean < long_mean):
         # Penalize invalid combinations heavily to guide the GA away from them
         return 1e10 # A very large number representing a bad fitness
 
