@@ -331,8 +331,8 @@ def trade_simulation(params):
     # Run the simulation
     buy_dates, buy_performance, buy_values, xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean  )
 
-#    final_value = np.mean(xdata['portfolio_value'].iloc[-120:-1])
-    final_value = np.mean(xdata['portfolio_value'])
+    final_value = np.mean(xdata['portfolio_value'].iloc[-120:-1])
+#    final_value = np.mean(xdata['portfolio_value'])
     investment  = xdata['invested_value'].iloc[-1]
 
     # Calculate final performance
@@ -359,7 +359,6 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean ):
     print(f"Optimal percent_drop: {percent_drop:.2f}")
     print(f"Optimal long_mean: {long_mean}")
     print(f"Optimal short_mean: {short_mean}")
-#    print(f"Optimal allowance_rate: {allowance_rate:.2f}")
     
     
 
@@ -405,36 +404,4 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean ):
     plt.tight_layout()
     plt.show()
 
-
-
-#    fig.tight_layout()
-#
-#
-#
-#    # Plot portfolio percentage return over time
-#    plt.figure(figsize=(12, 6))
-#    plt.plot(xdata.index, xdata['portfolio_pct'], label=f'Final Return')
-#    plt.scatter(buy_dates, buy_performance, color='red', marker='o', label='Share Purchase', zorder=5)
-#    plt.xlabel('Date')
-#    plt.ylabel('Performance (%)')
-#    plt.title(f'Portfolio Performance ({etf_ticker}) with Optimal Strategy')
-#    plt.axhline(0, color='gray', linestyle='--', linewidth=0.8)
-#    plt.grid(True)
-#    plt.legend()
-#    plt.tight_layout()
-#    plt.show()
-#
-#    # Plot portfolio accumulated value over time
-#    plt.figure(figsize=(12, 6))
-#    plt.plot(xdata.index, xdata['portfolio_value'], label=f'Portfolio Value')
-#    plt.plot(xdata.index, xdata['invested_value'],  label=f'Investment Value')
-#    plt.scatter(buy_dates, buy_values, color='red', marker='o', label='Share Purchase', zorder=5)
-#    plt.xlabel('Date')
-#    plt.ylabel('Accumulated Value')
-#    plt.title(f'Accumulated Investment Value ({etf_ticker}) with Optimal Strategy')
-#    plt.axhline(0, color='gray', linestyle='--', linewidth=0.8)
-#    plt.grid(True)
-#    plt.legend()
-#    plt.tight_layout()
-#    plt.show()
 
