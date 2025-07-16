@@ -258,6 +258,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
     buy_performance = []
     buy_values = []
     is_more_than_one_month=True
+    date_more_than_one_month=local_data.index[0]
 
 
     for i in range(1, len(local_data)):
@@ -266,9 +267,10 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
 
         # Add monthly cash infusion after one month from last purchase
         if len(buy_dates) > 0:
-            is_more_than_one_month = abs(today - buy_dates[-1]) > timedelta(days=30)
+            is_more_than_one_month = abs(today - date_more_than_one_month) > timedelta(days=30)
             if is_more_than_one_month:
                 cash_available += initial_cash
+                date_more_than_one_month=today
 
 
         # Calculate long and short moving averages
@@ -287,6 +289,20 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
 
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
         qty=cash_available // price_today
+#        if qty > 0:
+#            if is_more_than_one_month and not bought:
+#                cost = qty * price_today
+#                shares += qty
+#                cash_available -= cost
+#                investment += cost
+#                bought = True
+#            elif ((price_short_mean - price_long_mean)/price_long_mean) < percent_drop and not bought:
+#                qty= qty // (1+allowance_rate)
+#                cost = qty * price_today
+#                shares += qty
+#                cash_available -= cost
+#                investment += cost
+#                bought = True
         if qty > 0:
             if is_more_than_one_month:
                 cost = qty * price_today
@@ -302,6 +318,8 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
                 cash_available -= cost
                 investment += cost
                 bought = True
+
+
 
 
 
@@ -340,7 +358,8 @@ def trade_simulation(params):
     # Run the simulation
     buy_dates, buy_performance, buy_values, xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean  )
 
-    final_value = np.mean(xdata['portfolio_value'].iloc[-120:-1])
+#    final_value = np.mean(xdata['portfolio_value'].iloc[-120:-1])
+    final_value = np.mean(xdata['portfolio_value'])
     investment  = xdata['invested_value'].iloc[-1]
 
     # Calculate final performance
@@ -348,8 +367,10 @@ def trade_simulation(params):
     performance = final_value / investment if investment > 0 else 0
 
 
-    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
+#    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
 #    xpto=np.sum(global_data_for_workers_reference['portfolio_pct']-xdata['portfolio_pct'])
+#    xpto=np.mean(global_data_for_workers_reference['portfolio_value'].iloc[-120:-1])-np.mean(xdata['portfolio_value'].iloc[-120:-1])
+    xpto=-np.mean(xdata['portfolio_value'].iloc[-120:-1])
 
 
     # Return negative performance for minimization (maximizing return)
