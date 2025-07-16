@@ -25,9 +25,9 @@ if __name__ == "__main__":
 
     # Define genetic algorithm parameters and bounds
     POPULATION_SIZE = 10*8
-    GENERATIONS     = 10
+    GENERATIONS     = 5
     MUTATION_RATE   = 0.9
-    ELITISM_COUNT   = POPULATION_SIZE/8 # Keep the top 2 individuals
+    ELITISM_COUNT   = POPULATION_SIZE // 8 # Keep the top 2 individuals
 
     percent_drop_bounds = [-1.5, 1.5]
     long_mean_bounds = [1 , 120]
