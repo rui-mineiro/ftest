@@ -331,7 +331,7 @@ def trade_simulation(params):
     # Run the simulation
     buy_dates, buy_performance, buy_values, xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean  )
 
-    final_value = np.mean(xdata['portfolio_value'].iloc[-120:-1])
+    final_value = np.mean(xdata['portfolio_value'].iloc[-1])
 #    final_value = np.mean(xdata['portfolio_value'])
     investment  = xdata['invested_value'].iloc[-1]
 
