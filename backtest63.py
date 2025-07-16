@@ -30,8 +30,8 @@ if __name__ == "__main__":
     ELITISM_COUNT   = 2 # Keep the top 2 individuals
 
     percent_drop_bounds = [-1.5, 1.5]
-    long_mean_bounds = [-120 , 120]
-    short_mean_bounds = [-60 , 60]
+    long_mean_bounds = [1 , 120]
+    short_mean_bounds = [1 , 60]
 
 
     # Run the genetic algorithm
