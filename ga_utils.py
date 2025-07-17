@@ -253,11 +253,8 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
         price_today = local_data[etf_ticker].iloc[i]
 
         # Add monthly cash infusion after one month from last purchase
-        if len(buy_dates) > 0:
-            is_more_than_one_month = abs(today - date_more_than_one_month) > timedelta(days=30)
-            if is_more_than_one_month:
-                cash_available += initial_cash
-                date_more_than_one_month=today
+
+
 
 
         # Calculate long and short moving averages
@@ -276,21 +273,23 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
 
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
         qty=cash_available // price_today
-        if qty > 0:
-            if is_more_than_one_month:
-                cost = qty * price_today
-                shares += qty
-                cash_available -= cost
-                investment += cost
-                bought = True
-            elif ((price_short_mean - price_long_mean)/price_long_mean)*100 < percent_drop and not bought:
-                cash_available += initial_cash
-                qty=cash_available // price_today
-                cost = qty * price_today
-                shares += qty
-                cash_available -= cost
-                investment += cost
-                bought = True
+        is_more_than_one_month = abs(today - date_more_than_one_month) > timedelta(days=30)
+        if is_more_than_one_month:
+            cash_available += initial_cash
+            cost = qty * price_today
+            shares += qty
+            cash_available -= cost
+            investment += cost
+            bought = True
+            date_more_than_one_month=today
+        elif ((price_short_mean - price_long_mean)/price_long_mean)*100 < percent_drop and not bought:
+            cash_available += initial_cash
+            qty=cash_available // price_today
+            cost = qty * price_today
+            shares += qty
+            cash_available -= cost
+            investment += cost
+            bought = True
 
 
 
