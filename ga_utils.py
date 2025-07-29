@@ -291,7 +291,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
 #            investment += cost
 #            bought = True
 #
-        is_more_than_period = abs(today - date_more_than_period) > timedelta(days=5)
+        is_more_than_period = abs(today - date_more_than_period) > timedelta(days=7)
         if ((price_short_mean - price_long_mean)/price_long_mean)*100 < percent_drop and not bought and is_more_than_period:
             cash_available += initial_cash
             qty=cash_available // price_today
@@ -300,11 +300,9 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
             cash_available -= cost
             investment += cost
             bought = True
+            date_more_than_period=today
 
-        is_more_than_one_month = abs(today - date_more_than_one_month) > timedelta(days=30)    
-
-
-
+  
 
         # Update daily portfolio performance
         today_value = shares * price_today
@@ -353,11 +351,11 @@ def trade_simulation(params):
 #    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
 #    xpto=np.sum(global_data_for_workers_reference['portfolio_pct']-xdata['portfolio_pct'])
 #    xpto=np.mean(global_data_for_workers_reference['portfolio_value'].iloc[-120:-1])-np.mean(xdata['portfolio_value'].iloc[-120:-1])
-    xpto=-np.mean(xdata['portfolio_value'].iloc[-120:-1])
+#    xpto=-np.mean(xdata['portfolio_value'].iloc[-120:-1])
 
 
     # Return negative performance for minimization (maximizing return)
-    return round(-final_value, 2)
+    return round(-performance, 2)
 
 
 

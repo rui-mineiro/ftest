@@ -25,13 +25,13 @@ if __name__ == "__main__":
 
     # Define genetic algorithm parameters and bounds
     POPULATION_SIZE = 20*8
-    GENERATIONS     = 10
-    MUTATION_RATE   = 0.9
-    ELITISM_COUNT   = 1 # Keep the top 2 individuals
+    GENERATIONS     = 5
+    MUTATION_RATE   = 0.1
+    ELITISM_COUNT   = 0 # Keep the top 2 individuals
 
     percent_drop_bounds = [-3, 3]
-    long_mean_bounds = [1 , 120]
-    short_mean_bounds = [1 , 60]
+    long_mean_bounds    = [1 , 120]
+    short_mean_bounds   = [1 , 60]
 
 
     # Run the genetic algorithm
