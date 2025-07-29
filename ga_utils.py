@@ -346,6 +346,9 @@ def trade_simulation(params):
     # Calculate final performance
     # performance = (final_value - investment) / investment if investment > 0 else 0
     performance = final_value / investment if investment > 0 else 0
+    if final_value<27000:
+        performance=performance*0.95
+
 
 
 #    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
@@ -377,6 +380,8 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean ):
 
     ydata=global_data_for_workers_reference.copy()
     print(f"Maximized Return Reference: {ydata['portfolio_pct'].iloc[-1]:.2f}%")
+    print(f"Maximized Value  Reference: {ydata['portfolio_value'].iloc[-1]:.2f}€")
+    
 
 
 
