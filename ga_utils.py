@@ -244,8 +244,8 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
     buy_dates = []
     buy_performance = []
     buy_values = []
-    is_more_than_one_month=True
-    date_more_than_one_month=local_data.index[0]
+    is_more_than_period=True
+    date_more_than_period=local_data.index[0]
 
 
     for i in range(1, len(local_data)):
@@ -272,18 +272,27 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
         bought = False
 
         # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
-
-
-        if is_more_than_one_month:
-            cash_available += initial_cash
-            qty=cash_available // price_today
-            cost = qty * price_today
-            shares += qty
-            cash_available -= cost
-            investment += cost
-            bought = True
-            date_more_than_one_month=today
-        elif ((price_short_mean - price_long_mean)/price_long_mean)*100 < percent_drop and not bought:
+        qty=cash_available // price_today
+#        is_more_than_period = abs(today - date_more_than_period) > timedelta(days=30)
+#        if is_more_than_period:
+#            cash_available += initial_cash
+#            cost = qty * price_today
+#            shares += qty
+#            cash_available -= cost
+#            investment += cost
+#            bought = True
+#            date_more_than_period=today
+#        elif ((price_short_mean - price_long_mean)/price_long_mean)*100 < percent_drop and not bought:
+#            cash_available += initial_cash
+#            qty=cash_available // price_today
+#            cost = qty * price_today
+#            shares += qty
+#            cash_available -= cost
+#            investment += cost
+#            bought = True
+#
+        is_more_than_period = abs(today - date_more_than_period) > timedelta(days=5)
+        if ((price_short_mean - price_long_mean)/price_long_mean)*100 < percent_drop and not bought and is_more_than_period:
             cash_available += initial_cash
             qty=cash_available // price_today
             cost = qty * price_today
