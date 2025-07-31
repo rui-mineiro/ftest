@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 # This variable will be set in each worker process when the pool is initialized
 global_data_for_workers           = None
 global_data_for_workers_reference = None
-etf_ticker = 'SPPW.DE'
+# etf_ticker = 'SPPW.DE'
 
 def init_worker(worker_data):
     """
@@ -247,6 +247,8 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
     is_more_than_period=True
     date_more_than_period=local_data.index[0]
 
+    etf_ticker=local_data.columns[0]
+
 
     for i in range(1, len(local_data)):
         today = local_data.index[i]
@@ -346,8 +348,12 @@ def trade_simulation(params):
     # Calculate final performance
     # performance = (final_value - investment) / investment if investment > 0 else 0
     performance = final_value / investment if investment > 0 else 0
-    if final_value<27000:
-        performance=performance*0.95
+    ydata=global_data_for_workers_reference.copy()
+    final_value_reference=ydata['portfolio_value'].iloc[-1]
+
+    performance = (final_value - final_value_reference )
+#    if final_value<15200:
+#        performance=0
 
 
 
@@ -366,6 +372,9 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean ):
     """
     Visualizes the performance of the trading strategy with the given parameters.
     """
+
+    etf_ticker=data.columns[0]
+
     print("\n--- Optimization Complete ---")
     print(f"Optimal percent_drop: {percent_drop:.2f}")
     print(f"Optimal long_mean: {long_mean}")
@@ -380,7 +389,10 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean ):
 
     ydata=global_data_for_workers_reference.copy()
     print(f"Maximized Return Reference: {ydata['portfolio_pct'].iloc[-1]:.2f}%")
+    print(f"-----------------------------------------------------------------------------------------")
+    
     print(f"Maximized Value  Reference: {ydata['portfolio_value'].iloc[-1]:.2f}€")
+    print(f"Maximized Value           : {xdata['portfolio_value'].iloc[-1]:.2f}€")
     
 
 

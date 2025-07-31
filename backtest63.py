@@ -7,29 +7,47 @@ import random
 from ga_utils import *
 # from trade_utils import *
 from datetime import datetime, timedelta
+import os
 
 # --- Global data for multiprocessing ---
 # This variable will be set in each worker process when the pool is initialized
 global_data_for_workers = None
-etf_ticker = 'SPPW.DE'
+etf_ticker = 'DAVV.DE' # 'DFEN.DE' # 'SPPW.DE'
+csv_filename = f"{etf_ticker}_data.csv"
+
 
 # --- Main execution block ---
 if __name__ == "__main__":
     print(f"Downloading ETF data for {etf_ticker}...")
-    # Download data once  
-    original_data = yf.download(etf_ticker , start='2020-07-26' , end='2025-06-27' ,  auto_adjust=False)
-    original_data = original_data['Adj Close'].dropna()
-    original_data.name = etf_ticker # Name the series for easier access
+    # Check if the file exists and is not older than 1 day
+    if os.path.exists(csv_filename):
+        file_mtime = datetime.fromtimestamp(os.path.getmtime(csv_filename))
+        if datetime.now() - file_mtime < timedelta(days=1):
+            original_data = pd.read_csv(csv_filename, index_col=0, parse_dates=True)
+            original_data.name = etf_ticker
+            print("Data read_csv complete. Starting genetic algorithm optimization...")
+        else:
+            download_required = True
+    else:
+        download_required = True
 
-    print("Data download complete. Starting genetic algorithm optimization...")
+    if 'download_required' in locals() and download_required:
+        original_data = yf.download(etf_ticker, start='2023-11-26', end='2025-06-27', auto_adjust=False)
+        original_data = original_data['Adj Close'].dropna()
+        original_data.name = etf_ticker
+        original_data.to_csv(csv_filename)
+        print("Data download complete. Starting genetic algorithm optimization...")
+
+
+
 
     # Define genetic algorithm parameters and bounds
-    POPULATION_SIZE = 10*8
+    POPULATION_SIZE = 1*8
     GENERATIONS     = 5
     MUTATION_RATE   = 0.1
     ELITISM_COUNT   = 0 # Keep the top 2 individuals
 
-    percent_drop_bounds = [-3, 3]
+    percent_drop_bounds = [-10, 10]
     long_mean_bounds    = [1 , 120]
     short_mean_bounds   = [1 , 60]
 
