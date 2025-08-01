@@ -262,7 +262,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
         # Calculate long and short moving averages
         # Ensure sufficient data exists for the moving averages
         if i >= long_mean:
-            price_long_mean = np.mean(local_data[etf_ticker].iloc[i - long_mean + 1:i + 1])
+            price_long_mean = np.mean(local_data[etf_ticker].iloc[i - long_mean + 1:i - short_mean + 1])
         else:
             price_long_mean = np.mean(local_data[etf_ticker].iloc[:i + 1]) # Use all available data
 
@@ -294,7 +294,7 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
 #            bought = True
 #
         is_more_than_period = abs(today - date_more_than_period) > timedelta(days=7)
-        if ((price_short_mean - price_long_mean)/price_long_mean)*100 < percent_drop and not bought and is_more_than_period:
+        if ((price_long_mean - price_short_mean)/price_long_mean)*100 < percent_drop and not bought and is_more_than_period:
             cash_available += initial_cash
             qty=cash_available // price_today
             cost = qty * price_today
@@ -351,7 +351,7 @@ def trade_simulation(params):
     ydata=global_data_for_workers_reference.copy()
     final_value_reference=ydata['portfolio_value'].iloc[-1]
 
-    performance = (final_value - final_value_reference )
+    performance = final_value
 #    if final_value<15200:
 #        performance=0
 

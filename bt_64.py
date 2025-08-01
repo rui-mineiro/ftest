@@ -4,8 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import multiprocessing
 import random
-from ga_utils import *
-# from trade_utils import *
+from bt_64_utils import *
 from datetime import datetime, timedelta
 import os
 
