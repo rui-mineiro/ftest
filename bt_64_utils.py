@@ -11,8 +11,6 @@ from datetime import datetime, timedelta
 # --- Global data for multiprocessing ---
 # This variable will be set in each worker process when the pool is initialized
 global_data_for_workers           = None
-global_data_for_workers_reference = None
-# etf_ticker = 'SPPW.DE'
 
 def init_worker(worker_data):
     """
@@ -22,12 +20,10 @@ def init_worker(worker_data):
     global global_data_for_workers
     global_data_for_workers = worker_data
 
-    global global_data_for_workers_reference
-    _ , _ , _ , global_data_for_workers_reference = etf_ticker_simulation( 999 , 5 , 2 )
-
 # --- Genetic Algorithm Components ---
 
-def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds ):
+def initialize_population(pop_size, buy_percent_drop_bounds, buy_long_mean_bounds, buy_short_mean_bounds,
+                                    sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds ):
     """
     Creates an initial random population of individuals.
     Each individual is a tuple (percent_drop, long_mean, short_mean).
@@ -36,14 +32,18 @@ def initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short
     population = []
     for _ in range(pop_size):
         while True: # Loop until valid parameters are generated
-            p_drop = random.uniform(percent_drop_bounds[0], percent_drop_bounds[1])
-            l_mean = random.randint(long_mean_bounds[0], long_mean_bounds[1])
-            s_mean = random.randint(short_mean_bounds[0], short_mean_bounds[1])
+            b_p_drop = random.uniform(buy_percent_drop_bounds[0] , buy_percent_drop_bounds[1])
+            b_l_mean = random.randint(buy_long_mean_bounds[0]    , buy_long_mean_bounds[1])
+            b_s_mean = random.randint(buy_short_mean_bounds[0]   , buy_short_mean_bounds[1])
+            s_p_drop = random.uniform(sell_percent_drop_bounds[0], sell_percent_drop_bounds[1])
+            s_l_mean = random.randint(sell_long_mean_bounds[0]   , sell_long_mean_bounds[1])
+            s_s_mean = random.randint(sell_short_mean_bounds[0]  , sell_short_mean_bounds[1])
 
             # Ensure long_mean > short_mean and short_mean >= 1
-            if  s_mean < l_mean:
-                population.append((p_drop, l_mean, s_mean))
+            if  b_s_mean < b_l_mean and s_s_mean < s_l_mean:
+                population.append((b_p_drop, b_l_mean, b_s_mean, s_p_drop, s_l_mean, s_s_mean))
                 break # Valid individual generated, break inner loop
+
     return population
 
 def evaluate_population(population, pool):
@@ -69,7 +69,8 @@ def select_parents(population, fitnesses, num_parents_to_select=2, tournament_si
         selected_parents.append(winner)
     return selected_parents
 
-def crossover(parent1, parent2, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
+def crossover(parent1, parent2, buy_percent_drop_bounds, buy_long_mean_bounds, buy_short_mean_bounds,
+                                sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds):
     """
     Performs one-point crossover between two parents to create two children.
     """
@@ -84,17 +85,20 @@ def crossover(parent1, parent2, percent_drop_bounds, long_mean_bounds, short_mea
 
     # Ensure correct data types for children and enforce bounds/constraints
     child1 = enforce_bounds_and_constraints(
-        (float(child1[0]), int(child1[1]), int(child1[2])),
-        percent_drop_bounds, long_mean_bounds, short_mean_bounds
+        (float(child1[0]), int(child1[1]), int(child1[2]),float(child1[3]), int(child1[4]), int(child1[5])),
+        buy_percent_drop_bounds, buy_long_mean_bounds, buy_short_mean_bounds,
+        sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds
     )
     child2 = enforce_bounds_and_constraints(
-        (float(child2[0]), int(child2[1]), int(child2[2])),
-        percent_drop_bounds, long_mean_bounds, short_mean_bounds
+        (float(child1[0]), int(child1[1]), int(child1[2]),float(child1[3]), int(child1[4]), int(child1[5])),
+        buy_percent_drop_bounds, buy_long_mean_bounds, buy_short_mean_bounds,
+        sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds
     )
 
     return child1, child2
 
-def mutate(individual, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
+def mutate(individual, mutation_rate, buy_percent_drop_bounds, buy_long_mean_bounds, buy_short_mean_bounds,
+                                      sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds):
     """
     Applies mutation to an individual's genes with a given mutation rate.
     """
@@ -103,56 +107,82 @@ def mutate(individual, mutation_rate, percent_drop_bounds, long_mean_bounds, sho
     # Iterate through each gene and apply mutation independently
     if random.random() < mutation_rate:
         # Mutate percent_drop (index 0)
-        mutated_individual[0] = random.uniform(percent_drop_bounds[0], percent_drop_bounds[1])
+        mutated_individual[0] = random.uniform(buy_percent_drop_bounds[0], buy_percent_drop_bounds[1])
 
     if random.random() < mutation_rate:
         # Mutate long_mean (index 1)
-        mutated_individual[1] = random.randint(long_mean_bounds[0], long_mean_bounds[1])
+        mutated_individual[1] = random.randint(buy_long_mean_bounds[0], buy_long_mean_bounds[1])
 
     if random.random() < mutation_rate:
         # Mutate short_mean (index 2)
-        mutated_individual[2] = random.randint(short_mean_bounds[0], short_mean_bounds[1])
+        mutated_individual[2] = random.randint(buy_short_mean_bounds[0], buy_short_mean_bounds[1])
 
 
+    # Iterate through each gene and apply mutation independently
+    if random.random() < mutation_rate:
+        # Mutate percent_drop (index 0)
+        mutated_individual[3] = random.uniform(sell_percent_drop_bounds[0], sell_percent_drop_bounds[1])
+
+    if random.random() < mutation_rate:
+        # Mutate long_mean (index 1)
+        mutated_individual[4] = random.randint(sell_long_mean_bounds[0], sell_long_mean_bounds[1])
+
+    if random.random() < mutation_rate:
+        # Mutate short_mean (index 2)
+        mutated_individual[5] = random.randint(sell_short_mean_bounds[0], sell_short_mean_bounds[1])
 
 
     # Convert back to tuple and enforce bounds/constraints
     return enforce_bounds_and_constraints(
-        (float(mutated_individual[0]), int(mutated_individual[1]), int(mutated_individual[2])),
-        percent_drop_bounds, long_mean_bounds, short_mean_bounds
+        (float(mutated_individual[0]), int(mutated_individual[1]), int(mutated_individual[2]),
+         float(mutated_individual[3]), int(mutated_individual[4]), int(mutated_individual[5])),
+        buy_percent_drop_bounds, buy_long_mean_bounds, buy_short_mean_bounds,
+        sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds         
     )
 
-def enforce_bounds_and_constraints(individual, percent_drop_bounds, long_mean_bounds, short_mean_bounds):
+def enforce_bounds_and_constraints(individual, buy_percent_drop_bounds, buy_long_mean_bounds, buy_short_mean_bounds,
+                                               sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds):
     """
     Ensures that individual parameters stay within their defined bounds
     and satisfy the long_mean > short_mean constraint.
     """
-    p_drop, l_mean, s_mean  = individual
+    b_p_drop, b_l_mean, b_s_mean, s_p_drop, s_l_mean, s_s_mean  = individual
 
     # Enforce numerical bounds
-    p_drop = max(percent_drop_bounds[0], min(p_drop, percent_drop_bounds[1]))
-    l_mean = max(long_mean_bounds[0], min(l_mean, long_mean_bounds[1]))
-    s_mean = max(short_mean_bounds[0], min(s_mean, short_mean_bounds[1]))
+    b_p_drop = max(buy_percent_drop_bounds[0],  min(b_p_drop, buy_percent_drop_bounds[1]))
+    b_l_mean = max(buy_long_mean_bounds[0]   ,  min(b_l_mean, buy_long_mean_bounds[1]))
+    b_s_mean = max(buy_short_mean_bounds[0]  ,  min(b_s_mean, buy_short_mean_bounds[1]))
+    s_p_drop = max(sell_percent_drop_bounds[0], min(s_p_drop, sell_percent_drop_bounds[1]))
+    s_l_mean = max(sell_long_mean_bounds[0]   , min(s_l_mean, sell_long_mean_bounds[1]))
+    s_s_mean = max(sell_short_mean_bounds[0]  , min(s_s_mean, sell_short_mean_bounds[1]))
     
 
 
     # Enforce long_mean > short_mean constraint
     # If the constraint is violated, try to adjust s_mean or l_mean
-    if not ( s_mean < l_mean):
+    if not ( b_s_mean < b_l_mean) or not ( s_s_mean < s_l_mean):
         # Option 1: Re-randomize both means until valid (robust but might loop)
-        while not ( s_mean < l_mean):
-            l_mean = random.randint(long_mean_bounds[0], long_mean_bounds[1])
-            s_mean = random.randint(short_mean_bounds[0], short_mean_bounds[1])
+        while not ( b_s_mean < b_l_mean) or not ( s_s_mean < s_l_mean):
+            b_p_drop = random.uniform(buy_percent_drop_bounds[0] , buy_percent_drop_bounds[1])
+            b_l_mean = random.randint(buy_long_mean_bounds[0]    , buy_long_mean_bounds[1])
+            b_s_mean = random.randint(buy_short_mean_bounds[0]   , buy_short_mean_bounds[1])
+            s_p_drop = random.uniform(sell_percent_drop_bounds[0], sell_percent_drop_bounds[1])
+            s_l_mean = random.randint(sell_long_mean_bounds[0]   , sell_long_mean_bounds[1])
+            s_s_mean = random.randint(sell_short_mean_bounds[0]  , sell_short_mean_bounds[1])
 
-    return (p_drop, l_mean, s_mean)
+
+    return (b_p_drop, b_l_mean, b_s_mean, s_p_drop, s_l_mean, s_s_mean)
 
 
 def genetic_algorithm_optimization(
     pop_size,
     generations,
-    percent_drop_bounds,
-    long_mean_bounds,
-    short_mean_bounds,
+    buy_percent_drop_bounds,
+    buy_long_mean_bounds,
+    buy_short_mean_bounds,
+    sell_percent_drop_bounds,
+    sell_long_mean_bounds,
+    sell_short_mean_bounds,
     data_for_workers, # Moved this non-default argument before default ones
     mutation_rate=0.1,
     elitism_count=1
@@ -171,7 +201,8 @@ def genetic_algorithm_optimization(
     """
     # Initialize multiprocessing pool, passing data to each worker
     with multiprocessing.Pool(multiprocessing.cpu_count(), initializer=init_worker, initargs=(data_for_workers,)) as pool:
-        population = initialize_population(pop_size, percent_drop_bounds, long_mean_bounds, short_mean_bounds)
+        population = initialize_population(pop_size, buy_percent_drop_bounds,  buy_long_mean_bounds,  buy_short_mean_bounds,
+                                                     sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds)
         best_overall_individual = None
         best_overall_fitness = float('inf') # Initialize with a very high value for minimization
 
@@ -207,12 +238,15 @@ def genetic_algorithm_optimization(
                 parents = select_parents(population, fitnesses, num_parents_to_select=2)
 
                 # Perform crossover
-                child1, child2 = crossover(parents[0], parents[1], percent_drop_bounds, long_mean_bounds, short_mean_bounds)
+                child1, child2 = crossover(parents[0], parents[1], buy_percent_drop_bounds,  buy_long_mean_bounds,  buy_short_mean_bounds,
+                                                                   sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds)
 
                 # Apply mutation and add to new population
-                new_population.append(mutate(child1, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds))
+                new_population.append(mutate(child1, mutation_rate, buy_percent_drop_bounds,  buy_long_mean_bounds,  buy_short_mean_bounds,
+                                                                    sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds))
                 if len(new_population) < pop_size:
-                    new_population.append(mutate(child2, mutation_rate, percent_drop_bounds, long_mean_bounds, short_mean_bounds))
+                    new_population.append(mutate(child2, mutation_rate, buy_percent_drop_bounds,  buy_long_mean_bounds,  buy_short_mean_bounds,
+                                                                        sell_percent_drop_bounds, sell_long_mean_bounds, sell_short_mean_bounds))
 
             population = new_population[:pop_size] # Ensure population size remains constant
 
@@ -222,7 +256,8 @@ def genetic_algorithm_optimization(
 
 
 
-def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
+def etf_ticker_simulation(buy_percent_drop,  buy_long_mean,  buy_short_mean,
+                          sell_percent_drop, sell_long_mean, sell_short_mean ):
     """
     Simulates the ETF trading strategy based on the given parameters.
     Accessed globally shared data for efficiency in multiprocessing.
@@ -230,10 +265,10 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
     # Access the globally set data for this worker process
     local_data = global_data_for_workers.copy() # Use a copy to avoid modification issues across processes
 
-    investment = 0
     shares = 0
     initial_cash   = 100           # Initial cash
     cash_available = initial_cash  # Initial cash
+    investment     = initial_cash
 
     # Initialize columns for simulation results
     local_data['portfolio_value'] = 0.0
@@ -241,9 +276,9 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
     local_data['invested_value'] = 0.0
     local_data['shares'] = 0
 
-    buy_dates = []
-    buy_performance = []
-    buy_values = []
+    trade_dates = []
+    trade_performance = []
+    trade_values = []
     is_more_than_period=True
     date_more_than_period=local_data.index[0]
 
@@ -254,74 +289,66 @@ def etf_ticker_simulation(percent_drop , long_mean , short_mean ):
         today = local_data.index[i]
         price_today = local_data[etf_ticker].iloc[i]
 
-        # Add monthly cash infusion after one month from last purchase
-
-
-
-
-        # Calculate long and short moving averages
-        # Ensure sufficient data exists for the moving averages
-        if i >= long_mean:
-            price_long_mean = np.mean(local_data[etf_ticker].iloc[i - long_mean + 1:i - short_mean + 1])
+        if i >= buy_long_mean:
+            buy_price_long_mean = np.mean(local_data[etf_ticker].iloc[i - buy_long_mean + 1:i - buy_short_mean + 1])
         else:
-            price_long_mean = np.mean(local_data[etf_ticker].iloc[:i + 1]) # Use all available data
+            buy_price_long_mean = np.mean(local_data[etf_ticker].iloc[:i + 1]) # Use all available data
 
-        if i >= short_mean:
-            price_short_mean = np.mean(local_data[etf_ticker].iloc[i - short_mean + 1:i + 1])
+        if i >= buy_short_mean:
+            buy_price_short_mean = np.mean(local_data[etf_ticker].iloc[i - buy_short_mean + 1:i + 1])
         else:
-            price_short_mean = np.mean(local_data[etf_ticker].iloc[:i + 1]) # Use all available data
+            buy_price_short_mean = np.mean(local_data[etf_ticker].iloc[:i + 1]) # Use all available data
 
-        bought = False
+        if i >= sell_long_mean:
+            sell_price_long_mean = np.mean(local_data[etf_ticker].iloc[i - sell_long_mean + 1:i - sell_short_mean + 1])
+        else:
+            sell_price_long_mean = np.mean(local_data[etf_ticker].iloc[:i + 1]) # Use all available data
 
-        # Buy condition: if long mean minus short mean drops below percent_drop and cash is available
-        qty=cash_available // price_today
-#        is_more_than_period = abs(today - date_more_than_period) > timedelta(days=30)
-#        if is_more_than_period:
-#            cash_available += initial_cash
-#            cost = qty * price_today
-#            shares += qty
-#            cash_available -= cost
-#            investment += cost
-#            bought = True
-#            date_more_than_period=today
-#        elif ((price_short_mean - price_long_mean)/price_long_mean)*100 < percent_drop and not bought:
-#            cash_available += initial_cash
-#            qty=cash_available // price_today
-#            cost = qty * price_today
-#            shares += qty
-#            cash_available -= cost
-#            investment += cost
-#            bought = True
-#
+        if i >= sell_short_mean:
+            sell_price_short_mean = np.mean(local_data[etf_ticker].iloc[i - sell_short_mean + 1:i + 1])
+        else:
+            sell_price_short_mean = np.mean(local_data[etf_ticker].iloc[:i + 1]) # Use all available data
+
+        trade = False
         is_more_than_period = abs(today - date_more_than_period) > timedelta(days=7)
-        if ((price_long_mean - price_short_mean)/price_long_mean)*100 < percent_drop and not bought and is_more_than_period:
-            cash_available += initial_cash
-            qty=cash_available // price_today
-            cost = qty * price_today
-            shares += qty
-            cash_available -= cost
-            investment += cost
-            bought = True
-            date_more_than_period=today
 
+        # Buy, Sell or Stay
+        buy =(((buy_price_long_mean - buy_price_short_mean)/buy_price_long_mean)*100 < buy_percent_drop)
+        sell=(((sell_price_long_mean - sell_price_short_mean)/sell_price_long_mean)*100 > sell_percent_drop)
+        stay = ( buy == sell )
+        
+        if not stay:
+            if buy and is_more_than_period:
+#                cash_available += initial_cash
+                qty=cash_available // price_today
+                cost = qty * price_today
+#                investment += cost
+                shares += qty
+                cash_available -= cost
+                trade = True
+                date_more_than_period=today
+            elif sell:
+                cash_available += price_today*shares
+                shares = 0
+                trade = True
   
 
         # Update daily portfolio performance
-        today_value = shares * price_today
+        today_value = ( shares * price_today ) + cash_available
         today_pct = (today_value - investment) / investment * 100 if investment > 0 else 0
 
         local_data.loc[today,'portfolio_value'] = today_value
-        local_data.loc[today,'portfolio_pct'] = today_pct
-        local_data.loc[today,'invested_value'] = investment
-        local_data.loc[today,'shares'] = shares
+        local_data.loc[today,'portfolio_pct']   = today_pct
+        local_data.loc[today,'invested_value']  = investment
+        local_data.loc[today,'shares']          = shares
 
         # Record buy events
-        if bought:
-            buy_dates.append(today)
-            buy_performance.append(today_pct)
-            buy_values.append(investment)
+        if trade:
+            trade_dates.append(today)
+            trade_performance.append(today_pct)
+            trade_values.append(investment)
 
-    return buy_dates, buy_performance, buy_values, local_data
+    return trade_dates, trade_performance, trade_values, local_data
 
 
 def trade_simulation(params):
@@ -330,45 +357,34 @@ def trade_simulation(params):
     It takes a tuple of parameters and returns the negative of the final performance.
     Lower values indicate better performance (since we are minimizing).
     """
-    percent_drop, long_mean, short_mean  = params
+    buy_percent_drop, buy_long_mean, buy_short_mean, sell_percent_drop, sell_long_mean, sell_short_mean = params
 
     # Constraint: long_mean must be strictly greater than short_mean
     # Also, ensure short_mean is at least 1 (to have a valid mean)
-    if not (short_mean < long_mean):
+    if not ((buy_short_mean < buy_long_mean) and (sell_short_mean < sell_long_mean)):
         # Penalize invalid combinations heavily to guide the GA away from them
         return 1e10 # A very large number representing a bad fitness
 
     # Run the simulation
-    buy_dates, buy_performance, buy_values, xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean  )
+    trade_dates, trade_performance, trade_values, xdata = etf_ticker_simulation(buy_percent_drop,  buy_long_mean,  buy_short_mean,
+                                                                          sell_percent_drop, sell_long_mean, sell_short_mean )
 
     final_value = xdata['portfolio_value'].iloc[-1]
-#    final_value = np.mean(xdata['portfolio_value'])
+#   final_value = np.mean(xdata['portfolio_value'])
     investment  = xdata['invested_value'].iloc[-1]
 
-    # Calculate final performance
-    # performance = (final_value - investment) / investment if investment > 0 else 0
-    performance = final_value / investment if investment > 0 else 0
-    ydata=global_data_for_workers_reference.copy()
-    final_value_reference=ydata['portfolio_value'].iloc[-1]
-
+#    performance = (final_value - investment) / investment if investment > 0 else 0
+#    performance = final_value / investment if investment > 0 else 0
+    
+    
     performance = final_value
-#    if final_value<15200:
-#        performance=0
 
-
-
-#    xpto=np.sum(global_data_for_workers_reference['portfolio_value']-xdata['portfolio_value'])
-#    xpto=np.sum(global_data_for_workers_reference['portfolio_pct']-xdata['portfolio_pct'])
-#    xpto=np.mean(global_data_for_workers_reference['portfolio_value'].iloc[-120:-1])-np.mean(xdata['portfolio_value'].iloc[-120:-1])
-#    xpto=-np.mean(xdata['portfolio_value'].iloc[-120:-1])
-
-
-    # Return negative performance for minimization (maximizing return)
     return round(-performance, 2)
 
 
 
-def strategy_simulate(data, percent_drop , long_mean , short_mean ):
+def strategy_simulate(data, buy_percent_drop,  buy_long_mean,  buy_short_mean,
+                            sell_percent_drop, sell_long_mean, sell_short_mean ):
     """
     Visualizes the performance of the trading strategy with the given parameters.
     """
@@ -376,43 +392,32 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean ):
     etf_ticker=data.columns[0]
 
     print("\n--- Optimization Complete ---")
-    print(f"Optimal percent_drop: {percent_drop:.2f}")
-    print(f"Optimal long_mean: {long_mean}")
-    print(f"Optimal short_mean: {short_mean}")
+    print(f"Optimal buy  percent_drop: {buy_percent_drop:.2f}")
+    print(f"Optimal buy  long_mean:    {buy_long_mean}")
+    print(f"Optimal buy  short_mean:   {buy_short_mean}")
+    print(f"Optimal sell percent_drop: {sell_percent_drop:.2f}")
+    print(f"Optimal sell long_mean:    {sell_long_mean}")
+    print(f"Optimal sell short_mean:   {sell_short_mean}")
     
     
-
-
     init_worker(data)
-    buy_dates   , buy_performance   , buy_values   , xdata = etf_ticker_simulation(percent_drop , long_mean , short_mean )
-    print(f"Maximized Return : {xdata['portfolio_pct'].iloc[-1]:.2f}%")
-
-    ydata=global_data_for_workers_reference.copy()
-    print(f"Maximized Return Reference: {ydata['portfolio_pct'].iloc[-1]:.2f}%")
-    print(f"-----------------------------------------------------------------------------------------")
-    
-    print(f"Maximized Value  Reference: {ydata['portfolio_value'].iloc[-1]:.2f}€")
+    trade_dates   , trade_performance   , trade_values   , xdata = etf_ticker_simulation(buy_percent_drop,  buy_long_mean,  buy_short_mean,
+                                                                                         sell_percent_drop, sell_long_mean, sell_short_mean )
+    print(f"Maximized Return          : {xdata['portfolio_pct'].iloc[-1]:.2f}%")
     print(f"Maximized Value           : {xdata['portfolio_value'].iloc[-1]:.2f}€")
     
-
-
-
-
     fig,  (ax11, ax21)  = plt.subplots(2)
 
     ax11.set_xlabel('Date')
-    ax11.set_ylabel('Portfolio Value', color='tab:blue')
     ax11.plot(xdata.index, xdata['portfolio_value'], label='Portfolio Value' , color='tab:blue')
-    ax11.plot(xdata.index, xdata['invested_value'],  label='Invested_value'  , color='tab:blue')
-    ax11.plot(ydata.index, ydata['portfolio_value'], label='Portfolio Value Reference', color='tab:green')
-    ax11.plot(ydata.index, ydata['invested_value'],  label='Invested_value  Reference', color='tab:green')
+    ax11.plot(xdata.index, xdata['invested_value'],  label='Invested_value'  , color='tab:green')
+    ax11.set_yscale('log')
     ax11.legend()
     ax11.grid(True)
 
     
 
     ax12 = ax11.twinx()  # Instantiate a second axes that shares the same x-axis
-    ax12.set_ylabel('Shares', color='tab:red')  # We already handled the x-label
     ax12.plot(xdata.index, xdata[etf_ticker], label='Share Price', color='tab:red')
     ax12.tick_params(axis='y', labelcolor='tab:red')
     ax12.legend(loc='lower right')
@@ -422,9 +427,9 @@ def strategy_simulate(data, percent_drop , long_mean , short_mean ):
     ax21.set_xlabel('Date')
     ax21.set_ylabel('Portfolio Performance (%)', color='tab:blue')
     ax21.plot(xdata.index, xdata['portfolio_pct'], label='Portfolio Performance (%)'          , color='tab:blue')
-    ax21.plot(ydata.index, ydata['portfolio_pct'], label='Portfolio Performance Reference(%)' , color='tab:green')
     ax21.legend()
     ax21.grid(True)
+    ax21.set_yscale('log')
 
     plt.tight_layout()
     plt.show()

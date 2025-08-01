@@ -21,7 +21,7 @@ if __name__ == "__main__":
     # Check if the file exists and is not older than 1 day
     if os.path.exists(csv_filename):
         file_mtime = datetime.fromtimestamp(os.path.getmtime(csv_filename))
-        if datetime.now() - file_mtime < timedelta(days=1):
+        if datetime.now() - file_mtime < timedelta(days=3):
             original_data = pd.read_csv(csv_filename, index_col=0, parse_dates=True)
             original_data.name = etf_ticker
             print("Data read_csv complete. Starting genetic algorithm optimization...")
@@ -41,23 +41,30 @@ if __name__ == "__main__":
 
 
     # Define genetic algorithm parameters and bounds
-    POPULATION_SIZE = 5*8
+    POPULATION_SIZE = 100*8
     GENERATIONS     = 10
-    MUTATION_RATE   = 0.5
+    MUTATION_RATE   = 0.01
     ELITISM_COUNT   = 1 # Keep the top 2 individuals
 
-    percent_drop_bounds = [-30, 30]
-    long_mean_bounds    = [1 , 240]
-    short_mean_bounds   = [1 , 120]
+    buy_percent_drop_bounds  = [-30, 30]
+    sell_percent_drop_bounds = [-30, 30]
+    buy_long_mean_bounds     = [1 ,  60]
+    buy_short_mean_bounds    = [1 ,  60]
+    sell_long_mean_bounds    = [1 ,  60]
+    sell_short_mean_bounds   = [1 ,  60]
+
 
 
     # Run the genetic algorithm
     best_params, best_fitness = genetic_algorithm_optimization(
         pop_size=POPULATION_SIZE,
         generations=GENERATIONS,
-        percent_drop_bounds=percent_drop_bounds,
-        long_mean_bounds=long_mean_bounds,
-        short_mean_bounds=short_mean_bounds,
+        buy_percent_drop_bounds  =buy_percent_drop_bounds,
+        buy_long_mean_bounds     =buy_long_mean_bounds,
+        buy_short_mean_bounds    =buy_short_mean_bounds,
+        sell_percent_drop_bounds =sell_percent_drop_bounds,
+        sell_long_mean_bounds    =sell_long_mean_bounds,
+        sell_short_mean_bounds   =sell_short_mean_bounds,
         data_for_workers=original_data, # This is now correctly placed
         mutation_rate=MUTATION_RATE,
         elitism_count=ELITISM_COUNT
@@ -67,6 +74,6 @@ if __name__ == "__main__":
 
     # Visualize the best strategy found
     print("\nGenerating strategy simulation plots...")
-    strategy_simulate(original_data, best_params[0], best_params[1], best_params[2])
+    strategy_simulate(original_data, best_params[0], best_params[1], best_params[2], best_params[3], best_params[4], best_params[5])
     print("Plots generated successfully.")
 
