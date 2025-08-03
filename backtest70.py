@@ -55,11 +55,19 @@ print(f"Retorno acumulado: {cumulative_return:.2%}")
 fig = go.Figure()
 asset_value = pf[symbol].asset_value()
 
+
 fig.add_trace(go.Scatter(x=asset_value.index,
                          y=asset_value.values,
                          mode='lines',
                          name='Asset Value',
                          line=dict(color='blue')
+                         ))
+
+fig.add_trace(go.Scatter(x=price[symbol].index,
+                         y=price[symbol].values*10,
+                         mode='lines',
+                         name='Price',
+                         line=dict(color='green')
                          ))
 
 
