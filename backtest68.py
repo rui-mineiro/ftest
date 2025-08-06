@@ -29,8 +29,9 @@ pf = vbt.Portfolio.from_signals(
 # Plot and display
 # pf.plots_defaults['subplots']
 # print(pf.plots_defaults['subplots'])
-# pf.plot_settings['subplots'].keys()
+#
+# print(list(pf.plot.__self__.subplots.keys()))
+#
 
-
-pf.plot(column=symbol,subplots=['orders','cash','cum_returns','value']).show()
+pf.plot(column=symbol,subplots=['orders', 'trades', 'trade_pnl', 'asset_flow', 'cash_flow', 'assets', 'cash', 'asset_value', 'value', 'cum_returns', 'drawdowns', 'underwater', 'gross_exposure', 'net_exposure']).show()
 
