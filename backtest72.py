@@ -7,9 +7,9 @@ from itertools import product
 price = vbt.YFData.download('SPPW.DE').get('Close')  # shape (n,)
 
 # Define parameter ranges
-fast_windows = np.arange(5, 20, 5)     # 5, 10, 15
-slow_windows = np.arange(20, 60, 10)   # 20, 30, 40, 50
-rsi_windows  = np.arange(10, 30, 5)    # 10, 15, 20, 25
+fast_windows = np.arange(3, 20, 1)     # 5, 10, 15
+slow_windows = np.arange(10, 60, 1)   # 20, 30, 40, 50
+rsi_windows  = np.arange(5, 30, 1)    # 10, 15, 20, 25
 
 # Create all combinations
 combinations = list(product(fast_windows, slow_windows, rsi_windows))
