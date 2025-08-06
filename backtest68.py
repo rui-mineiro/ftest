@@ -27,5 +27,10 @@ pf = vbt.Portfolio.from_signals(
 )
 
 # Plot and display
-fig=pf.plot(column=symbol)
-fig.show()
+# pf.plots_defaults['subplots']
+# print(pf.plots_defaults['subplots'])
+# pf.plot_settings['subplots'].keys()
+
+
+pf.plot(column=symbol,subplots=['orders','cash','cum_returns','value']).show()
+
