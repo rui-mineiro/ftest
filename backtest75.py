@@ -4,7 +4,7 @@ import pandas as pd
 import itertools
 import plotly.graph_objects as go
 
-symbol = 'SPPW.DE'
+symbol = 'DAVV.DE' # 'DFEN.DE' # 'SPPW.DE'
 # Download price data
 price = vbt.YFData.download(symbol).get('Close')
 
