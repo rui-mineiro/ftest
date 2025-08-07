@@ -1,52 +1,34 @@
-import yfinance as yf
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import ruptures as rpt
-import os
+import numpy as np
+import vectorbt as vbt
+
+# Create a sample price series
+price = pd.Series([
+    100, 102, 105, 103, 101,
+    98, 96, 99, 102, 104,
+    106, 105, 103, 100, 98,
+    97, 99, 101
+])
+
+# Calculate a simple moving average
+moving_average = price.rolling(window=3).mean()
+
+# Generate raw entry and exit signals using the .vbt accessor
+entries = price.vbt.crossed_above(moving_average)
+exits = price.vbt.crossed_below(moving_average)
+
+# Display the messy signals
+print("------ Raw Signals ------")
+raw_signals_df = pd.DataFrame({'Price': price, 'MA': moving_average, 'Entries': entries, 'Exits': exits})
+print(raw_signals_df.replace(False, '-'))
 
 
-CACHE_FILE = "stock_history.csv"
-ticker_symbol = "SPY"
-
-# Step 1: Load from cache or fetch from yfinance
-if os.path.exists(CACHE_FILE):
-    print(f"Loading cached data from {CACHE_FILE}")
-    df = pd.read_csv(CACHE_FILE, index_col=0, parse_dates=True)
-else:
-    print("Fetching data from yfinance...")
-    ticker = yf.Ticker(ticker_symbol)
-    df = ticker.history(period="max")
-    df.to_csv(CACHE_FILE)
-    print(f"Data saved to {CACHE_FILE}")
+# --- CORRECTED LINE ---
+# Clean the signals using the .vbt.signals accessor
+cleaned_entries, cleaned_exits = entries.vbt.signals.clean(exits)
 
 
-# Step 2: Compute daily returns
-df['Return'] = df['Close'].pct_change()
-# df['Return'] = df['Close'].values
-# df['Return'] = np.log(df['Close'].values) 
-
-# Step 3: Rolling z-score
-window = 30  # 30-day window
-df['RollingMean'] = df['Return'].rolling(window=8).mean()
-df['RollingStd'] = df['Return'].rolling(window=120).std()
-df['ZScore'] = (df['Return'] - df['RollingMean']) / df['RollingStd']
-
-# Step 4: Mark significant changes
-threshold = 3  # z-score threshold
-df['Anomaly'] = df['ZScore'].abs() > threshold
-
-# Step 5: Segment the data
-df['SegmentID'] = df['Anomaly'].cumsum()
-
-# Step 6: Plot
-plt.figure(figsize=(14, 6))
-plt.plot(df.index, df['Close'], label='Close Price')
-plt.scatter(df[df['Anomaly']].index, df[df['Anomaly']]['Close'], color='red', label='Significant Change', zorder=5)
-plt.title("Tesla Close Price with Z-Score Based Regime Changes")
-plt.xlabel("Date")
-plt.ylabel("Price")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+# Display the cleaned signals
+print("\n------ Cleaned Signals ------")
+cleaned_signals_df = pd.DataFrame({'Price': price, 'MA': moving_average, 'Entries': cleaned_entries, 'Exits': cleaned_exits})
+print(cleaned_signals_df.replace(False, '-'))

@@ -3,16 +3,20 @@ import numpy as np
 import pandas as pd
 from itertools import product
 import numba
+import os
+
+os.environ["NUMBA_NUM_THREADS"] = "8"
 print("Numba threads:", numba.get_num_threads())
+numba.set_num_threads(8)
 
 price = vbt.YFData.download('SPPW.DE').get('Close')
 
 # fast_windows = np.array([5, 10, 15])
 # slow_windows = np.array([20, 30, 40, 50])
 # rsi_windows = np.array([10, 15, 20, 25])
-fast_windows = np.arange(3, 20, 1)
-slow_windows = np.arange(10, 60, 1)
-rsi_windows =  np.arange(5, 30, 1) 
+fast_windows = np.arange(3, 5, 1)
+slow_windows = np.arange(4, 10, 1)
+rsi_windows =  np.arange(5, 10, 1) 
 
 # Valid combinations
 valid_combinations = [(f, s, r) for f in fast_windows for s in slow_windows for r in rsi_windows if f < s]
@@ -48,7 +52,7 @@ exits_df.columns = labels
 price_clean = price.copy()
 price_clean.name = None  # or 'Price'
 
-pf = vbt.Portfolio.from_signals(price_clean, entries_df, exits_df, init_cash=10_000)
+pf = vbt.Portfolio.from_signals(price_clean, entries_df, exits_df, init_cash=10000)
 
 total_profits = pf.total_profit()
 
