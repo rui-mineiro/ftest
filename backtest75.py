@@ -3,10 +3,18 @@ import numpy as np
 import pandas as pd
 import itertools
 import plotly.graph_objects as go
+from datetime import datetime, timedelta
 
-symbol = 'DAVV.DE' # 'DFEN.DE' # 'SPPW.DE'
+
+symbol = 'DFEN.DE' # 'DAVV.DE' # 'DFEN.DE' # 'SPPW.DE'
+
+
+yesterday = 1
+
 # Download price data
-price = vbt.YFData.download(symbol).get('Close')
+enddate=datetime.today()-timedelta(days=yesterday)
+startdate=datetime.today()-timedelta(days=yesterday)-timedelta(days=365*2)
+price = vbt.YFData.download(symbol,start=startdate,end=enddate).get('Close')
 
 # Parameter grid
 
@@ -64,42 +72,43 @@ total_profits = pf.total_profit()
 best_label = total_profits.idxmax()
 best_profit = total_profits.max()
 
-
-
 # Output
 print("Best Parameters:")
 print(f"  {best_label}")
 print(f"Total Profit: ${best_profit:.2f}")
 
+# 
+# fig = go.Figure()
+# value = pf[best_label].value()
+# 
+# fig.add_trace(go.Scatter(x=value.index,
+#                          y=value.values,
+#                          mode='lines',
+#                          name='Asset Value',
+#                          line=dict(color='blue')
+#                          ))
+# 
+# 
+# fig.add_trace(go.Scatter(x=value[entries[best_label]].index,
+#                          y=value[entries[best_label]].values,
+#                          mode='markers',
+#                          name='Compras',
+#                          marker=dict(color='green', size=8, symbol='triangle-up')
+# ))
+# 
+# fig.add_trace(go.Scatter(x=value[exits[best_label]].index,
+#                          y=value[exits[best_label]].values,
+#                          mode='markers',
+#                          name='Vendas',
+#                          marker=dict(color='red', size=8, symbol='triangle-down')
+# ))
+# 
+# fig.update_layout(title="Valor do portfólio",
+#                   xaxis_title="Data",
+#                   yaxis_title="€")
+# fig.show()
+# 
+# 
+# 
 
-fig = go.Figure()
-value = pf[best_label].value()
-
-fig.add_trace(go.Scatter(x=value.index,
-                         y=value.values,
-                         mode='lines',
-                         name='Asset Value',
-                         line=dict(color='blue')
-                         ))
-
-
-fig.add_trace(go.Scatter(x=value[entries[best_label]].index,
-                         y=value[entries[best_label]].values,
-                         mode='markers',
-                         name='Compras',
-                         marker=dict(color='green', size=8, symbol='triangle-up')
-))
-
-fig.add_trace(go.Scatter(x=value[exits[best_label]].index,
-                         y=value[exits[best_label]].values,
-                         mode='markers',
-                         name='Vendas',
-                         marker=dict(color='red', size=8, symbol='triangle-down')
-))
-
-fig.update_layout(title="Valor do portfólio",
-                  xaxis_title="Data",
-                  yaxis_title="€")
-fig.show()
-
-
+pf.plot(column=best_label,subplots=['orders', 'trades', 'trade_pnl', 'asset_flow', 'cash_flow', 'assets', 'cash', 'asset_value', 'value', 'cum_returns', 'drawdowns', 'underwater', 'gross_exposure', 'net_exposure']).show()

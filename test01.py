@@ -1,13 +1,13 @@
-import random
+import vectorbt as vbt
+import numpy as np
+import pandas as pd
+import itertools
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
+import re
 
-a=int(input("adivinha o número em que eu pensei : "))
-numero_secreto=random.randint(1, 10)
-print("Testaste o numero  -> ",a)
-print("O numero secreto é -> ", numero_secreto)
-if numero_secreto==a:
-    print("Acertaste!!")
-else:
-    print("Erraste. És uma grande besta !!!")
+
+
 
 
 
