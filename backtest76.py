@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import re
 
 
-symbol = 'DFEN.DE' # 'DAVV.DE' # 'DFEN.DE' # 'SPPW.DE'
+symbol = 'SPPW.DE' # 'DAVV.DE' # 'DFEN.DE' # 'SPPW.DE'
 
 
 def get_price(symbol,period=365,yesterday=4):
@@ -87,6 +87,7 @@ def get_mas(price):
 
 price              = get_price(symbol,period=365,yesterday=4)
 b_f, b_s, s_f, s_s = get_mas(price)
+
 
 print("Best Parameters:")
 print(f"bfast={b_f}_bslow={b_s}_sfast={s_f}_sslow={s_s}")
