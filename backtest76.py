@@ -10,11 +10,8 @@ import re
 symbol = 'SPPW.DE' # 'DAVV.DE' # 'DFEN.DE' # 'SPPW.DE'
 
 
-def get_price(symbol,period=365,yesterday=4):
-    enddate=datetime.today()-timedelta(days=yesterday)
-    startdate=datetime.today()-timedelta(days=yesterday)-timedelta(days=period)
+def get_price(symbol,startdate,enddate):
     price = vbt.YFData.download(symbol,start=startdate,end=enddate).get('Close')
-
     return price
 
 
@@ -82,50 +79,18 @@ def get_mas(price):
     _ , b_f , _ , b_s , _ , s_f , _ , s_s   = re.split('[_=]', best_label)
     
 
-    return b_f, b_s, s_f, s_s
+    return price,best_label,entries[best_label],exits[best_label]
 
 
-price              = get_price(symbol,period=365,yesterday=4)
-b_f, b_s, s_f, s_s = get_mas(price)
+yesterday=4
+startdate=datetime(2024, 1, 1)
+enddate=datetime(2025,6,5)
 
+price                          = get_price(symbol,startdate,enddate)
+price,best_label,entries,exits = get_mas(price)
+
+today=yesterday+1
 
 print("Best Parameters:")
 print(f"bfast={b_f}_bslow={b_s}_sfast={s_f}_sslow={s_s}")
 
-
-# 
-# 
-# fig = go.Figure()
-# value = pf[best_label].value()
-# 
-# fig.add_trace(go.Scatter(x=value.index,
-#                          y=value.values,
-#                          mode='lines',
-#                          name='Asset Value',
-#                          line=dict(color='blue')
-#                          ))
-# 
-# 
-# fig.add_trace(go.Scatter(x=value[entries[best_label]].index,
-#                          y=value[entries[best_label]].values,
-#                          mode='markers',
-#                          name='Compras',
-#                          marker=dict(color='green', size=8, symbol='triangle-up')
-# ))
-# 
-# fig.add_trace(go.Scatter(x=value[exits[best_label]].index,
-#                          y=value[exits[best_label]].values,
-#                          mode='markers',
-#                          name='Vendas',
-#                          marker=dict(color='red', size=8, symbol='triangle-down')
-# ))
-# 
-# fig.update_layout(title="Valor do portfólio",
-#                   xaxis_title="Data",
-#                   yaxis_title="€")
-# fig.show()
-# 
-# 
-# 
-
-# pf.plot(column=best_label,subplots=['orders', 'trades', 'trade_pnl', 'asset_flow', 'cash_flow', 'assets', 'cash', 'asset_value', 'value', 'cum_returns', 'drawdowns', 'underwater', 'gross_exposure', 'net_exposure']).show()
