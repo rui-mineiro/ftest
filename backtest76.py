@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import itertools
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta , date
 import re
 
 
@@ -14,6 +14,13 @@ def get_price(symbol,startdate,enddate):
     price = vbt.YFData.download(symbol,start=startdate,end=enddate).get('Close')
     return price
 
+def get_price_next(symbol,startdate,enddate):
+    
+    price = vbt.YFData.download(symbol,start=startdate,end=enddate).get('Close')
+    price_next=vbt.YFData.download(symbol,start=startdate,end=enddate+timedelta(days=1)).get('Open')
+    price.loc[price_next.index[-1]]=price_next.iloc[-1]
+    
+    return price
 
 
 def get_mas(price):
@@ -76,18 +83,39 @@ def get_mas(price):
 
     print(f"Total Profit: ${best_profit:.2f}")
 
-    _ , b_f , _ , b_s , _ , s_f , _ , s_s   = re.split('[_=]', best_label)
+
+    return best_label,entries[best_label],exits[best_label]
+
+
+def get_entries_exits(price,mas):
+
+    [b_fast, b_slow, s_fast, s_slow]=mas
+
+    b_fast_ma = vbt.MA.run(price, window=b_fast).ma
+    b_slow_ma = vbt.MA.run(price, window=b_slow).ma
+    s_fast_ma = vbt.MA.run(price, window=s_fast).ma
+    s_slow_ma = vbt.MA.run(price, window=s_slow).ma
+
+    # Compute entry and exit signals
+    raw_entries = (b_fast_ma > b_slow_ma)
+    raw_exits =   (s_fast_ma < s_slow_ma)
     
+    entries, exits = raw_entries.vbt.signals.clean(raw_exits)
 
-    return price,best_label,entries[best_label],exits[best_label]
+    return entries, exits
 
-
-yesterday=4
 startdate=datetime(2024, 1, 1)
+# enddate=datetime.now()
 enddate=datetime(2025,6,5)
 
-price                          = get_price(symbol,startdate,enddate)
-price,best_label,entries,exits = get_mas(price)
+price                                   = get_price(symbol,startdate,enddate)
+best_label,entries,exits                = get_mas(price)
+_ , b_f , _ , b_s , _ , s_f , _ , s_s   = re.split('[_=]', best_label)
+mas                                     = list(map(int, [b_f, b_s, s_f, s_s]))
+fromdate                                = enddate-timedelta(days=(2*max(mas)))  
+price_next                              = get_price_next(symbol,fromdate,enddate)
+next_entries, next_exits                = get_entries_exits(price_next,mas)
+
 
 today=yesterday+1
 
