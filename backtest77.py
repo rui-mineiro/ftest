@@ -117,58 +117,5 @@ price                                   = get_price(symbol,startdate,enddate)
 best_label,entries,exits                = get_mas(price)
 _ , b_f , _ , b_s , _ , s_f , _ , s_s   = re.split('[_=]', best_label)
 mas                                     = list(map(int, [b_f, b_s, s_f, s_s]))
-fromdate                                = enddate-timedelta(days=(2*max(mas)))  
-price_next                              = get_price_next(symbol,fromdate,enddate)
-entries_next, exits_next                = get_entries_exits(price_next,entries,exits,mas)
 
 
-
-pf_next = vbt.Portfolio.from_signals(
-    price_next,
-    entries_next,
-    exits_next,
-    init_cash=10000,
-    fees=0.001
-)
-
-pf = vbt.Portfolio.from_signals(
-    price[-len(price_next)+1:-1],
-    entries[-len(price_next)+1:-1],
-    exits[-len(price_next)+1:-1],
-    init_cash=10000,
-    fees=0.001
-)
-
-
-pf.plot(subplots=['value']).show()
-pf_next.plot(subplots=['value']).show()
-
-# pf.plot(column=symbol,subplots=['orders', 'trades', 'trade_pnl', 'asset_flow', 'cash_flow', 'assets', 'cash', 'asset_value', 'value', 'cum_returns', 'drawdowns', 'underwater', 'gross_exposure', 'net_exposure']).show()
-# pf.plot(subplots=['orders', 'trades', 'trade_pnl', 'asset_flow', 'cash_flow', 'assets', 'cash', 'asset_value', 'value', 'cum_returns', 'drawdowns', 'underwater', 'gross_exposure', 'net_exposure']).show()
-
-# 
-# 
-# 
-# fig = make_subplots(rows=1, cols=2)
-# 
-# value = pf[best_label].value()
-# 
-# fig.add_trace(
-#     go.Scatter(x=[1, 2, 3], y=[4, 5, 6]),
-#     row=1, col=1
-# )
-# 
-# fig.add_trace(
-#     go.Scatter(x=[20, 30, 40], y=[50, 60, 70]),
-#     row=1, col=2
-# )
-# 
-# fig.update_layout(height=600, width=800, title_text="Side By Side Subplots")
-# fig.show()
-# 
-# 
-# 
-# 
-# print("Best Parameters:")
-# print(f"bfast={b_f}_bslow={b_s}_sfast={s_f}_sslow={s_s}")
-# 
