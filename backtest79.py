@@ -106,7 +106,7 @@ def get_next_signals(price_next, mas):
     return entries_next, exits_next, b_fast_ma, b_slow_ma, s_fast_ma, s_slow_ma
 
 
-def plot_strategy(symbol, price_next, entries_next, exits_next, b_fast_ma, b_slow_ma, b_f, b_s, s_fast_ma, s_slow_ma, s_f, s_s, pf_best, signal_text):
+def plot_strategy(symbol, price, entries, exits, b_fast_ma, b_slow_ma, b_f, b_s, s_fast_ma, s_slow_ma, s_f, s_s, pf_best, signal_text):
                   
     """
     Plota dois gráficos: Preço + sinais e Lucro acumulado.
@@ -115,23 +115,27 @@ def plot_strategy(symbol, price_next, entries_next, exits_next, b_fast_ma, b_slo
                         vertical_spacing=0.15, row_heights=[0.7, 0.3],
                         subplot_titles=("Preço e Sinais", "Lucro Acumulado"))
 
-    # Painel 1 - Buy
-    fig.add_trace(go.Scatter(x=price_next.index, y=price_next.values,
+    fig.add_trace(go.Scatter(x=price.index, y=price.values,
                              mode='lines', name='Preço', line=dict(color='black')), row=1, col=1)
 
-    fig.add_trace(go.Scatter(x=price_next.index, y=b_fast_ma.values,
-                             mode='lines', name=f'MA Rápida ({b_f})', line=dict(color='blue')), row=1, col=1)
-
-    fig.add_trace(go.Scatter(x=price_next.index, y=b_slow_ma.values,
-                             mode='lines', name=f'MA Lenta ({b_s})', line=dict(color='orange')), row=1, col=1)
-
-    fig.add_trace(go.Scatter(x=entries.index[entries], y=price_next[entries],
+    # Painel 1 - Buy
+    fig.add_trace(go.Scatter(x=price.index, y=b_fast_ma.values,
+                             mode='lines', name=f'MA Rápida ({b_f})', line=dict(color='rgb(60, 179, 113)')), row=1, col=1)
+    fig.add_trace(go.Scatter(x=price.index, y=b_slow_ma.values,
+                             mode='lines', name=f'MA Lenta ({b_s})', line=dict(color='rgb(0, 100, 0)')), row=1, col=1)
+    fig.add_trace(go.Scatter(x=entries.index[entries], y=price[entries],
                              mode='markers', name='Compra', marker=dict(color='green', size=10, symbol='triangle-up')), row=1, col=1)
 
-    fig.add_trace(go.Scatter(x=exits.index[exits], y=price_next[exits],
+    # Painel 1 - Sell
+    fig.add_trace(go.Scatter(x=price.index, y=s_fast_ma.values,
+                             mode='lines', name=f'MA Rápida ({s_f})', line=dict(color='rgb(255, 99, 71)')), row=1, col=1)
+    fig.add_trace(go.Scatter(x=price.index, y=s_slow_ma.values,
+                             mode='lines', name=f'MA Lenta ({s_s})', line=dict(color='rgb(178, 34, 34)')), row=1, col=1)
+    fig.add_trace(go.Scatter(x=exits.index[exits], y=price[exits],
                              mode='markers', name='Venda', marker=dict(color='red', size=10, symbol='triangle-down')), row=1, col=1)
+                             
 
-    fig.add_trace(go.Scatter(x=[price_next.index[-1]], y=[price_next.iloc[-1]],
+    fig.add_trace(go.Scatter(x=[price.index[-1]], y=[price.iloc[-1]],
                              mode='markers+text', text=[signal_text], textposition='top center',
                              marker=dict(color='purple', size=14, symbol='star'),
                              name='Próximo dia'), row=1, col=1)
