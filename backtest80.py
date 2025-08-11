@@ -18,16 +18,29 @@ def download_price_with_next(symbol, startdate, enddate):
     Retorna: price (Close histórico), price_next (Close + próximo dia com preço de abertura).
     """
     # Pega um pouco além do enddate para garantir que pegamos o próximo dia de mercado
-    price_data = vbt.YFData.download(symbol, start=startdate, end=enddate + timedelta(days=7))
+    price_data = vbt.YFData.download(symbol, start=startdate, end=enddate)
     close = price_data.get("Close")
     open_ = price_data.get("Open")
 
     # Histórico até enddate
-    price_hist = close.loc[close.index <= enddate]
+    # price_hist = close.loc[close.index <= enddate]
+    price_hist = close.loc[close.index]
 
     # Próximo dia de mercado
-    next_day_idx = close.index[close.index > enddate][0]
-    next_open_price = open_.loc[next_day_idx]
+    # next_day_idx = close.index[close.index > enddate][0]
+    # next_open_price = open_.loc[next_day_idx]
+
+    next_day_idx=close.index[-1]+timedelta(days=1)
+
+    user_input = input(f"Enter today price (default will be yesterday price of $ {price_hist.iloc[-1]:.2f}: ").strip()  
+
+    if user_input == "":
+        next_open_price = price_hist.iloc[-1]
+    else:
+        next_open_price = float(user_input)
+    
+    print(f"Using value: $ {next_open_price:.2f}")
+    
 
     # Adiciona próximo dia ao histórico usando preço de abertura
     price_with_next = price_hist.copy()
@@ -118,14 +131,14 @@ def plot_strategy(symbol, price, entries, exits, b_fast_ma, b_slow_ma, b_f, b_s,
                         specs=[[{"type": "scatter"},       None                         ],
                                [{"type": "scatter"}, {"type":  "scatter", "rowspan": 2} ],
                                [{"type": "scatter"},       None                         ]],
-                        subplot_titles=("Preço e Sinais", "Lucro Acumulado"))
+                        subplot_titles=("Lucro Acumulado", "Compra", "Compra/Venda" , "Venda" ))
 
 
     # Painel 2 - Price
     fig.add_trace(go.Scatter(x=price.index, y=price.values,
                              mode='lines', name='Preço', line=dict(color='black')), row=2, col=2)
     fig.add_trace(go.Scatter(x=[price.index[-1]], y=[price.iloc[-1]],
-                         mode='markers+text', text=[signal_text], textposition='top center',
+                         mode='markers+text', text=[signal_text], textposition='top left',
                          marker=dict(color='purple', size=14, symbol='star'),
                          name='Próximo dia'), row=2, col=2)
     fig.add_trace(go.Scatter(x=entries.index[entries], y=price[entries],
@@ -161,11 +174,8 @@ def plot_strategy(symbol, price, entries, exits, b_fast_ma, b_slow_ma, b_f, b_s,
                              mode='lines', name='Lucro acumulado', line=dict(color='green')), row=1, col=1)
 
     fig.update_layout(title=f"Estratégia para {symbol} — {signal_text}",
-                      xaxis2_title="Data",
-                      yaxis_title="Preço",
-                      yaxis2_title="Valor da Carteira (€)",
                       height=800,
-                      legend=dict(x=0, y=1.15, bgcolor='rgba(255,255,255,0)'))
+                      legend=dict(x=0.45, y=1.15, bgcolor='rgba(255,255,255,0)'))
 
     fig.show()
 
@@ -176,7 +186,7 @@ def plot_strategy(symbol, price, entries, exits, b_fast_ma, b_slow_ma, b_f, b_s,
 
 symbols = ['DFEN.DE']  # ['SPPW.DE', 'DAVV.DE']  # podes meter quantos quiseres
 startdate = datetime(2023, 4, 10)
-enddate   = datetime.today()-timedelta(days=20)
+enddate   = datetime.today()
 startdate = pd.Timestamp(startdate, tz="UTC")
 enddate   = pd.Timestamp(enddate, tz="UTC")
 
