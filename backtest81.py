@@ -48,16 +48,26 @@ def download_price_with_next(symbol, startdate, enddate):
 
     return price_hist, price_with_next
 
-
-def find_best_params(price):
+def find_best_params(price,maLimits):
     """
     Faz grid search para encontrar os melhores parâmetros (b_f, b_s, s_f, s_s).
     Retorna best_label (string) e pf_all (portfólio de todos os testes).
     """
-    b_fast_windows = np.arange(1, 30)
-    s_fast_windows = np.arange(1, 30)
-    b_slow_windows = np.arange(1, 15)
-    s_slow_windows = np.arange(1, 15)
+
+    b_fastLL=maLimits[0]
+    b_fastLH=maLimits[1]
+    b_slowLL=maLimits[2]
+    b_slowLH=maLimits[3]    
+    s_fastLL=maLimits[4]
+    s_fastLH=maLimits[5]
+    s_slowLL=maLimits[6]    
+    s_slowLH=maLimits[7]    
+
+
+    b_fast_windows = np.arange(b_fastLL, b_fastLH)
+    b_slow_windows = np.arange(b_slowLL, b_slowLH)
+    s_fast_windows = np.arange(s_fastLL, s_fastLH)
+    s_slow_windows = np.arange(s_slowLL, s_slowLH)
 
     valid_combinations = [
         (b_f, b_s, s_f, s_s)
@@ -100,8 +110,7 @@ def find_best_params(price):
     print(f"Dados entre as datas {entries.index[0].strftime('%Y-%m-%d')} e {entries.index[-1].strftime('%Y-%m-%d')}")
     print(f"Janela optima: {best_label} | Lucro: €{best_profit:.2f}")
 
-    return best_label, pf_all
-
+    return best_label
 
 def get_next_signals(price_next, mas):
     """
@@ -119,7 +128,6 @@ def get_next_signals(price_next, mas):
     entries_next, exits_next = raw_entries.vbt.signals.clean(raw_exits)
 
     return entries_next, exits_next, b_fast_ma, b_slow_ma, s_fast_ma, s_slow_ma
-
 
 def plot_strategy(symbol, price, entries, exits, b_fast_ma, b_slow_ma, b_f, b_s, s_fast_ma, s_slow_ma, s_f, s_s, pf_best, signal_text):
                   
@@ -186,38 +194,51 @@ def plot_strategy(symbol, price, entries, exits, b_fast_ma, b_slow_ma, b_f, b_s,
 # LOOP PARA VÁRIOS SÍMBOLOS
 # ============================================================
 
-symbols = ['DFEN.DE']  # ['SPPW.DE', 'DAVV.DE']  # podes meter quantos quiseres
-startdate = datetime(2023, 4, 10)
-enddate   = datetime.today()
+symbol = 'DFEN.DE'  # ['SPPW.DE', 'DAVV.DE']  # podes meter quantos quiseres
+
+
+b_fastLL=1
+b_fastLH=15
+
+b_slowLL=10
+b_slowLH=40
+
+s_fastLL=1
+s_fastLH=15
+
+s_slowLL=10
+s_slowLH=40
+
+maLimits= [ b_fastLL , b_fastLH , b_slowLL , b_slowLH , s_fastLL , s_fastLH , s_slowLL , s_slowLH ]
+
+# startdate = datetime(2023, 4, 10)
+backdays=0
+periodAnalysis=30*6
+
+startdate = datetime.today()-timedelta(days=periodAnalysis)-timedelta(days=backdays)
+enddate   = datetime.today()-timedelta(days=backdays)
 startdate = pd.Timestamp(startdate, tz="UTC")
 enddate   = pd.Timestamp(enddate, tz="UTC")
 
-for symbol in symbols:
-    print(f"\n=== {symbol} ===")
-
-    # 1. Download dos preços
-    price_hist, price_next = download_price_with_next(symbol, startdate, enddate)
-
-    # 2. Encontrar melhores parâmetros
-    best_label, _ = find_best_params(price_hist)
-    _, b_f, _, b_s, _, s_f, _, s_s = re.split('[_=]', best_label)
-    mas = list(map(int, [b_f, b_s, s_f, s_s]))
-
-    # 3. Sinais com parâmetros ótimos
-    entries_next, exits_next, b_fast_ma, b_slow_ma, s_fast_ma, s_slow_ma = get_next_signals(price_next, mas)
-
-    pf_best = vbt.Portfolio.from_signals(price_next, entries_next, exits_next, init_cash=10000, fees=0.001)
-
-    # 5. Decisão para o próximo dia
-    last_entry = entries_next.iloc[-1]
-    last_exit  = exits_next.iloc[-1]
-    if last_entry and not last_exit:
-        signal_text = "📈 Sinal de COMPRA para o próximo dia"
-    elif last_exit and not last_entry:
-        signal_text = "📉 Sinal de VENDA para o próximo dia"
-    else:
-        signal_text = "⏸️ Sem ação — manter posição"
-    print(f"  {signal_text}")
-
-    # 6. Gráfico
-    plot_strategy(symbol, price_next, entries_next, exits_next, b_fast_ma, b_slow_ma, b_f, b_s, s_fast_ma, s_slow_ma, s_f, s_s, pf_best, signal_text)
+print(f"\n=== {symbol} ===")
+# 1. Download dos preços
+price_hist, price_next = download_price_with_next(symbol, startdate, enddate)
+# 2. Encontrar melhores parâmetros
+best_label = find_best_params(price_hist,maLimits)
+_, b_f, _, b_s, _, s_f, _, s_s = re.split('[_=]', best_label)
+mas = list(map(int, [b_f, b_s, s_f, s_s]))
+# 3. Sinais com parâmetros ótimos
+entries_next, exits_next, b_fast_ma, b_slow_ma, s_fast_ma, s_slow_ma = get_next_signals(price_next, mas)
+pf_best = vbt.Portfolio.from_signals(price_next, entries_next, exits_next, init_cash=10000, fees=0.001)
+# 5. Decisão para o próximo dia
+last_entry = entries_next.iloc[-1]
+last_exit  = exits_next.iloc[-1]
+if last_entry and not last_exit:
+    signal_text = "📈 Sinal de COMPRA para o próximo dia"
+elif last_exit and not last_entry:
+    signal_text = "📉 Sinal de VENDA para o próximo dia"
+else:
+    signal_text = "⏸️ Sem ação — manter posição"
+print(f"  {signal_text}")
+# 6. Gráfico
+plot_strategy(symbol, price_next, entries_next, exits_next, b_fast_ma, b_slow_ma, b_f, b_s, s_fast_ma, s_slow_ma, s_f, s_s, pf_best, signal_text)
