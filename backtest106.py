@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import random
 
 # --- PARAMETERS ---
 tickerA = "AAPL"
@@ -14,9 +15,8 @@ end_date   = "2025-05-31"
 cash=1000
 unitsApct, unitsBpct = 0.5 , 0.5
 
-SA_K , SB_K, C_K = 3/100 ,3/100 , 5   # threshold and cooldown
-SA = 0
-SA = 0
+S_K , C_K = 4 , 0 # threshold and cooldown
+S = 0
 C = 0
 
 # --- DOWNLOAD DATA ---
@@ -60,27 +60,27 @@ for t, (date, row) in enumerate(data.iterrows(), start=1):
 
     
     # update score
-    S = S + retA - retB
+    S = unitsA*pA - unitsB*pB
 
     moved = None
     if C > 0:
         C -= 1
     else:
         if S >= S_K and unitsB>0 and value >= pA:
-            cash    = cash + pB*unitsB
-            unitsB  = 0
-            unitsA  = cash // pA
-            cash    = cash - unitsA*pA
+            unitsB0=random.randint(0, int(unitsB)+1)-1
+            unitsB  -= unitsB0
+            cash    += pB*unitsB0
+            unitsA  += cash // pA
+            cash    -= unitsA*pA
             moved = f"{tickerB}→{tickerA}"
-            S = 0
             C = C_K
         elif S <= -S_K and unitsA>0 and value >= pB:
-            cash    = cash + pA*unitsA
-            unitsA  = 0
-            unitsB  = cash // pB
-            cash    = cash - unitsB*pB
+            unitsA0=random.randint(0, int(unitsA)+1)-1            
+            unitsA  -= unitsA0
+            cash    += pA*unitsA0
+            unitsB  += cash // pB
+            cash    -= unitsB*pB
             moved = f"{tickerA}→{tickerB}"
-            S = 0
             C = C_K
 
     # update portfolio value
