@@ -6,7 +6,7 @@ import random
 
 # --- PARAMETERS ---
 tickerA = "AAPL"
-tickerB = "DAVV.DE" # "MSFT"
+tickerB = "MSFT" # "DAVV.DE" # "MSFT"
 start_date = "2024-01-01"
 end_date   = "2025-05-31"
 
@@ -15,7 +15,7 @@ end_date   = "2025-05-31"
 cash=1000
 unitsApct, unitsBpct = 0.5 , 0.5
 
-S_K , C_K = 0 , 3 # threshold and cooldown
+S_K , C_K = 0.6 , 5 # threshold and cooldown
 S = 0
 C = 0
 
@@ -62,34 +62,30 @@ for t, (date, row) in enumerate(data.iterrows(), start=1):
     # update score
     S += (retA - retB)*(pA*unitsA - pB*unitsB)
 
-
-
-
     moved = None
     if C > 0:
         C -= 1
     else:
-        S = 0
-        if S >= S_K and unitsB>1 and value >= pA:
-            unitsB0=random.randint(0, int(unitsB)-1)
+        unitsB0=random.randint(0, int(unitsB)-1)
+        unitsA0=random.randint(0, int(unitsA)-1)
+        if S >= S_K and unitsB>1 and value >= pA and unitsB0>0:
             unitsB  -= unitsB0
             cash    += pB*unitsB0
             unitsA0  = cash // pA
             unitsA  += unitsA0
             cash    -= unitsA0*pA
-            moved = f"{tickerB}→{tickerA}"
+            moved = f"{unitsB0}{tickerB}→{tickerA}"
             C = C_K
-#            S = 0
-        elif S <= -S_K and unitsA>1 and value >= pB:
-            unitsA0=random.randint(0, int(unitsA)-1)
+        elif S <= -S_K and unitsA>1 and value >= pB  and unitsA0>0:
             unitsA  -= unitsA0
             cash    += pA*unitsA0
             unitsB0  = cash // pB
             unitsB  += unitsB0
             cash    -= unitsB0*pB
-            moved = f"{tickerA}→{tickerB}"
+            moved = f"{unitsA0}{tickerA}→{tickerB}"
             C = C_K
-#            S = 0
+        S = 0
+
 
 
 

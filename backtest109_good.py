@@ -15,7 +15,7 @@ end_date   = "2025-05-31"
 cash=1000
 unitsApct, unitsBpct = 0.5 , 0.5
 
-S_K , C_K = 0 , 3 # threshold and cooldown
+S_K , C_K = 0.1 , 20 # threshold and cooldown
 S = 0
 C = 0
 
@@ -60,16 +60,14 @@ for t, (date, row) in enumerate(data.iterrows(), start=1):
 
     
     # update score
-    S += (retA - retB)*(pA*unitsA - pB*unitsB)
-
-
-
+    xxAB = 1 if xAB else -1
+    xxAB = 1
+    S += (retA - retB)*(pA*unitsA - pB*unitsB)*xxAB
 
     moved = None
     if C > 0:
         C -= 1
     else:
-        S = 0
         if S >= S_K and unitsB>1 and value >= pA:
             unitsB0=random.randint(0, int(unitsB)-1)
             unitsB  -= unitsB0
@@ -79,7 +77,6 @@ for t, (date, row) in enumerate(data.iterrows(), start=1):
             cash    -= unitsA0*pA
             moved = f"{tickerB}→{tickerA}"
             C = C_K
-#            S = 0
         elif S <= -S_K and unitsA>1 and value >= pB:
             unitsA0=random.randint(0, int(unitsA)-1)
             unitsA  -= unitsA0
@@ -89,7 +86,8 @@ for t, (date, row) in enumerate(data.iterrows(), start=1):
             cash    -= unitsB0*pB
             moved = f"{tickerA}→{tickerB}"
             C = C_K
-#            S = 0
+        S = 0
+
 
 
 
