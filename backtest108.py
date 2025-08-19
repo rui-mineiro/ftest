@@ -15,7 +15,7 @@ end_date   = "2025-05-31"
 cash=1000
 unitsApct, unitsBpct = 0.5 , 0.5
 
-S_K , C_K = 5 , 2 # threshold and cooldown
+S_K , C_K = 0 , 3 # threshold and cooldown
 S = 0
 C = 0
 
@@ -60,7 +60,8 @@ for t, (date, row) in enumerate(data.iterrows(), start=1):
 
     
     # update score
-    S += (retA*pA*unitsA - retB*pB*unitsB)
+    S += retA - retB
+
 
 
 
@@ -68,7 +69,7 @@ for t, (date, row) in enumerate(data.iterrows(), start=1):
     if C > 0:
         C -= 1
     else:
-        if S >= S_K and value >= pA:
+        if S >= S_K and unitsB>1 and value >= pA:
             unitsB0=random.randint(0, int(unitsB)-1)
             unitsB  -= unitsB0
             cash    += pB*unitsB0
@@ -76,9 +77,9 @@ for t, (date, row) in enumerate(data.iterrows(), start=1):
             unitsA  += unitsA0
             cash    -= unitsA0*pA
             moved = f"{tickerB}→{tickerA}"
-            S=0
             C = C_K
-        elif S <= -S_K and value >= pB:
+            S = 0
+        elif S <= -S_K and unitsA>1 and value >= pB:
             unitsA0=random.randint(0, int(unitsA)-1)
             unitsA  -= unitsA0
             cash    += pA*unitsA0
@@ -86,8 +87,10 @@ for t, (date, row) in enumerate(data.iterrows(), start=1):
             unitsB  += unitsB0
             cash    -= unitsB0*pB
             moved = f"{tickerA}→{tickerB}"
-            S=0
             C = C_K
+            S = 0
+
+
 
     # update portfolio value
     value = unitsA * pA + unitsB * pB + cash
