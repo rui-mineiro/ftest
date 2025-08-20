@@ -21,7 +21,7 @@ S_K , C_K = 1/100 , 5 # threshold and cooldown
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
 tickersPct = pd.DataFrame( [ tickerPct ], columns=tickerIdx)
 
-S=pd.Series(0, index=tickerIdx)
+S = pd.Series(0 , index=tickerIdx)
 C = 0
 
 # --- DOWNLOAD DATA ---
@@ -62,12 +62,13 @@ for t, index in enumerate(data.index, start=1):
     # update score
     S += rTicker
 
-    moved = None
+    moved = pd.Series(None, index=tickerIdx,dtype=str)
+
     if C > 0:
         C -= 1
     else:
-        SHBuy         = S[S >    S_K]  # Compra estas
-        SLSell        = S[S <=   S_K]  # Se não houver SHBuy vende apenas
+        SHBuy         = S[S >    S_K]
+        SLSell        = S[S <=   S_K]
         unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x.iloc[0]) + 1))
         if not SHBuy.empty:
             unitsTickerL[SLSell.index] = unitsTicker[SLSell.index]-unitsTickerRnd[SLSell.index]
@@ -76,9 +77,9 @@ for t, index in enumerate(data.index, start=1):
 
             for ticker in SHBuy.index:
                 unitsTickerH[ticker] = cash // ( priceTicker[ticker] / tickersPct[ticker] )
+                moved[ticker]        = str(int(unitsTickerH[ticker].iloc[0]))+"-"+ticker
             cash = cash - unitsTickerH[SHBuy.index].mul(pTicker[SHBuy.index]).sum(axis=1).iloc[0]
             unitsTicker[SHBuy.index] = unitsTicker[SHBuy.index] + unitsTickerH[SHBuy.index]
-#            moved = f"{unitsB0}{tickerB}→{tickerA}"
         C = C_K
         S=pd.Series(0, index=tickerIdx)
 
@@ -91,7 +92,8 @@ for t, index in enumerate(data.index, start=1):
         "price": pTicker.copy(),    
         "units": unitsTicker.copy(),
         "value": value.copy(),      
-        "S"    : S.copy()          
+        "S"    : S.copy(),
+        "moved": moved.copy()
     })
     a=1
 
@@ -131,6 +133,23 @@ for ticker in S_df["ticker"].unique():
             mode="lines",
             name="S"+ticker
         ),
+        row=1, col=1
+    )
+
+
+moved_wide = df["moved"].apply(pd.Series)
+moved_wide["date"] = df["date"].values
+moved_wide=moved_wide.dropna()
+moved_df = moved_wide.melt(id_vars="date", var_name="ticker", value_name="moved")
+for ticker in moved_df["ticker"].unique():
+    data = moved_df[moved_df["ticker"] == ticker]
+    fig.add_trace(go.Scatter(
+        x=moved_df["date"], y=[df.loc[df["date"]==d, "value"].values[0] for d in moved_df["date"]],
+        mode="markers+text",
+        marker=dict(size=9, symbol="triangle-up", color="black"),
+        text=moved_df["moved"], textposition="top center",
+        name="Switches"
+        ),secondary_y=True,
         row=1, col=1
     )
 

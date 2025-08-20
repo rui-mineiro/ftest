@@ -135,6 +135,22 @@ for ticker in S_df["ticker"].unique():
     )
 
 
+S_wide = df["S"].apply(pd.Series)
+S_wide["date"] = df["date"].values   # attach the real dates
+S_df = S_wide.melt(id_vars="date", var_name="ticker", value_name="Score")
+for ticker in S_df["ticker"].unique():
+    data = S_df[S_df["ticker"] == ticker]
+    fig.add_trace(
+        go.Scatter(
+            x=data["date"],
+            y=data["Score"],
+            mode="lines",
+            name="S"+ticker
+        ),
+        row=1, col=1
+    )
+
+
 
 fig.add_trace(
     go.Scatter(
