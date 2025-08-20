@@ -139,8 +139,9 @@ for ticker in S_df["ticker"].unique():
 
 moved_wide = df["moved"].apply(pd.Series)
 moved_wide["date"] = df["date"].values
-moved_wide=moved_wide.dropna()
+# moved_wide=moved_wide.dropna()
 moved_df = moved_wide.melt(id_vars="date", var_name="ticker", value_name="moved")
+moved_df = moved_df.dropna()
 for ticker in moved_df["ticker"].unique():
     data = moved_df[moved_df["ticker"] == ticker]
     fig.add_trace(go.Scatter(
