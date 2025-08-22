@@ -8,8 +8,8 @@ import datetime
 
 # --- PARAMETERS ---
 
-tickerIdx     = ["AAPL"] # , "MSFT" , "DAVV.DE"  ]
-tickerPct     = [ 1 ] #, 0.3 , 0.4 ]
+tickerIdx     = ["AAPL" , "MSFT" , "DAVV.DE"  ]
+tickerPct     = [ 0.3 , 0.3 , 0.4 ]
 
 start_date = "2024-01-01"
 end_date   = "2025-05-31"
@@ -55,6 +55,24 @@ unitsTicker = cash // (priceTicker.div(tickerPct)*2)
 # Initial cash for transactions
 cash  = cash - unitsTicker.mul(priceTicker).sum()
 
+
+
+def get_unitsTickerRnd(unitsTicker, pTicker, x):
+    # Quick feasibility check: if even 1 share of the cheapest ticker is >= x → impossible
+    if pTicker.min() >= x:
+        return None
+    
+    for _ in range(max_trials):
+        rnd = pd.Series(
+            np.random.randint(0, unitsTicker.values + 1),
+            index=unitsTicker.index
+        )
+        if (rnd * pTicker).sum() < x:
+            return rnd
+    
+    # If nothing found after many tries → assume impossible
+    return None
+
 for t, index in enumerate(data.index, start=1):
     pTicker = data.loc[index]
     rTicker = rets.loc[index]
@@ -92,14 +110,16 @@ for t, index in enumerate(data.index, start=1):
                     for ticker in tickersL:
                         moved[ticker]    = "-"+str(unitsTickerL[ticker])+"#"+ticker
                 
-                # Buy random units of all the tickers above S_B  # quando faz buy tem de se ter em conta o dinheiro disponível
-                unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x) + 1))
-                tickersH=SBuy.index
-                unitsTickerH    = unitsTickerRnd[tickersH]
-                for ticker in tickersH:     
-                    moved[ticker]        = "+"+str(unitsTickerH[ticker])+"#"+ticker
-                cash = cash - unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
-                unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
+                # Buy random units of all the tickers above S_B
+                # unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x) + 1))
+                unitsTickerRnd  = get_unitsTickerRnd(unitsTicker,pTicker,cash)
+                if unitsTickerRnd is not None:
+                    tickersH=SBuy.index
+                    unitsTickerH    = unitsTickerRnd[tickersH]
+                    for ticker in tickersH:     
+                        moved[ticker]        = "+"+str(unitsTickerH[ticker])+"#"+ticker
+                    cash = cash - unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
+                    unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
 
             SSell  = S[S <= S_S]
             if not SSell.empty:              # If there are some tickers bellow S_S
@@ -117,15 +137,16 @@ for t, index in enumerate(data.index, start=1):
 
                 nSSell = S[S >  S_S]         
                 if not nSSell.empty:          # Buy random units of the ticker above S_S with highest score
-                    unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x) + 1))
-                    unitsTickerH    = pd.Series(0, index=tickerIdx)
-                    tickersH=[nSSell.idxmax()]
-                    unitsTickerH = unitsTickerRnd[tickersH]
-                    cash = cash + unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
-                    unitsTicker[tickersH] = unitsTicker[tickersH] - unitsTickerH[tickersH]
-                    for ticker in tickersH:
-                        moved[ticker]    = "+"+str(unitsTickerH[ticker])+"#"+ticker
-
+                    # unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x) + 1))
+                    unitsTickerRnd  = get_unitsTickerRnd(unitsTicker,pTicker,cash)
+                    if unitsTickerRnd is not None:
+                        unitsTickerH    = pd.Series(0, index=tickerIdx)
+                        tickersH=[nSSell.idxmax()]
+                        unitsTickerH = unitsTickerRnd[tickersH]
+                        cash = cash + unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
+                        unitsTicker[tickersH] = unitsTicker[tickersH] - unitsTickerH[tickersH]
+                        for ticker in tickersH:
+                            moved[ticker]    = "+"+str(unitsTickerH[ticker])+"#"+ticker
         S=pd.Series(0, index=tickerIdx)
         C = C_K
 
