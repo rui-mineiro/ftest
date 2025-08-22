@@ -4,18 +4,19 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import random
 import numpy as np
+import datetime
 
 # --- PARAMETERS ---
 
-tickerIdx     = ["AAPL", "MSFT" , "DAVV.DE"  ]
-tickerPct     = [ 0.3 , 0.3 , 0.4 ]
+tickerIdx     = ["AAPL"] # , "MSFT" , "DAVV.DE"  ]
+tickerPct     = [ 1 ] #, 0.3 , 0.4 ]
 
 start_date = "2024-01-01"
 end_date   = "2025-05-31"
 
 cash=1000
 
-S_H, S_B , S_S , C_K = -1/100, 1/100, -1/100, 5 # threshold and cooldown
+S_H, S_B , S_S , C_K = -10/100, 5/100, -5/100, 5 # threshold and cooldown
 
 
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
@@ -75,12 +76,8 @@ for t, index in enumerate(data.index, start=1):
             unitsTickerL = unitsTicker
             for ticker in tickersL:     
                 moved[ticker]        = "-"+str(unitsTickerL[ticker])+"#"+ticker
-            cash = cash - unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
-            unitsTicker[tickersL] = unitsTicker[tickersL] + unitsTickerL[tickersL]
-
-
-
-                        
+            cash = cash + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
+            unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
         else:
             SBuy   = S[S >  S_B]
             if not SBuy.empty:               # If there are some tickers above S_B 
@@ -95,7 +92,7 @@ for t, index in enumerate(data.index, start=1):
                     for ticker in tickersL:
                         moved[ticker]    = "-"+str(unitsTickerL[ticker])+"#"+ticker
                 
-                # Buy random units of all the tickers above S_B
+                # Buy random units of all the tickers above S_B  # quando faz buy tem de se ter em conta o dinheiro disponível
                 unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x) + 1))
                 tickersH=SBuy.index
                 unitsTickerH    = unitsTickerRnd[tickersH]
@@ -129,8 +126,8 @@ for t, index in enumerate(data.index, start=1):
                     for ticker in tickersH:
                         moved[ticker]    = "+"+str(unitsTickerH[ticker])+"#"+ticker
 
-            C = C_K
-            S=pd.Series(0, index=tickerIdx)
+        S=pd.Series(0, index=tickerIdx)
+        C = C_K
 
     # update portfolio value
     value = unitsTicker.mul(pTicker).sum() + cash
