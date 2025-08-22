@@ -57,7 +57,7 @@ cash  = cash - unitsTicker.mul(priceTicker).sum()
 
 
 
-def get_unitsTickerRnd(unitsTicker, pTicker, x):
+def get_unitsTickerRnd(unitsTicker, pTicker, x,  max_trials=10000):
     # Quick feasibility check: if even 1 share of the cheapest ticker is >= x → impossible
     if pTicker.min() >= x:
         return None
