@@ -16,7 +16,7 @@ end_date   = "2025-05-31"
 
 cash=1000
 
-S_H, S_B , S_S , C_K = -10/100, 5/100, -5/100, 10 # threshold and cooldown
+S_H, S_B , S_S , C_K = -0.5/100, 1/100, -1/100, 5 # threshold and cooldown
 
 
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
@@ -57,20 +57,30 @@ cash  = cash - unitsTicker.mul(priceTicker).sum()
 
 
 
-def get_unitsTickerRnd(unitsTicker, pTicker, x,  max_trials=10000):
-    # Quick feasibility check: if even 1 share of the cheapest ticker is >= x → impossible
-    if pTicker.min() >= x:
+def get_unitsTickerRnd(tickerIdx, pTicker, cash, max_trials=10000):
+    """
+    Generate a random integer allocation of tickers such that
+    total value < cash. Returns False if no valid allocation found.
+    """
+    # Convert tickerIdx to Series index
+    tickers = pd.Index(tickerIdx)
+    
+    # Feasibility check: if the cheapest share already costs >= cash → impossible
+    if pTicker.min() >= cash:
         return None
-    
+
     for _ in range(max_trials):
+        # Random integers (0 to a reasonable cap)
+        pTicker / pTicker.sum()
+
         rnd = pd.Series(
-            np.random.randint(0, unitsTicker.values+1),
-            index=unitsTicker.index
+            np.random.randint(1, cash * pTicker // pTicker.sum()+1) ,
+            index=tickers
         )
-        if (rnd * pTicker).sum() < x:
+        
+        if (rnd * pTicker).sum() < cash:
             return rnd
-    
-    # If nothing found after many tries → assume impossible
+
     return None
 
 for t, index in enumerate(data.index, start=1):
@@ -86,12 +96,12 @@ for t, index in enumerate(data.index, start=1):
     if C > 0:
         C -= 1
     else:
-        nSHold  = S[S > S_H]
-        if nSHold.empty:         
+        nSHold = S[S >  S_H]
+        SHold  = S[S <= S_H]
+        if nSHold.empty and unitsTicker.sum()>0:
             # Sell all units of all the tickers
-            SHold  = S[S <= S_H]
-            tickersL=SHold.index
-            unitsTickerL = unitsTicker
+            unitsTickerL = unitsTicker[unitsTicker > 0].astype(int)
+            tickersL=unitsTickerL.index
             for ticker in tickersL:     
                 moved[ticker]        = "-"+str(unitsTickerL[ticker])+"#"+ticker
             cash = cash + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
@@ -101,18 +111,17 @@ for t, index in enumerate(data.index, start=1):
             if not SBuy.empty:               # If there are some tickers above S_B 
                 nSBuy  = S[S <= S_B]
 
-                if not nSBuy.empty:          # Sell random units of the ticker bellow S_B with lowest score
-                    unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x)+1))
+                if not nSBuy.empty and unitsTicker[nSBuy.index].sum()>0:          # Sell random units of the ticker bellow S_B with lowest score
                     tickersL=[nSBuy.idxmin()]
+                    unitsTickerRnd  = unitsTicker[tickersL].apply(lambda x: np.random.randint(0, int(x)+1))
                     unitsTickerL = unitsTickerRnd[tickersL]
                     cash = cash + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
                     unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
                     for ticker in tickersL:
                         moved[ticker]    = "-"+str(unitsTickerL[ticker])+"#"+ticker
                 
-                # Buy random units of all the tickers above S_B
-                # unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x) + 1))
-                unitsTickerRnd  = get_unitsTickerRnd(unitsTicker,pTicker,cash)
+                # Buy random units of all the tickers above S_B # Aqui
+                unitsTickerRnd  = get_unitsTickerRnd(SBuy.index,pTicker[SBuy.index],cash)
                 if unitsTickerRnd is not None:
                     tickersH=SBuy.index
                     unitsTickerH    = unitsTickerRnd[tickersH]
@@ -122,14 +131,13 @@ for t, index in enumerate(data.index, start=1):
                     unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
 
             SSell  = S[S <= S_S]
-            if not SSell.empty:              # If there are some tickers bellow S_S
+            if not SSell.empty  and unitsTicker[SSell.index].sum()>0:              # If there are some tickers bellow S_S
 
-
-                # Sell random units of all the ticker bellow S_S # Ultima alteração
-                unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x)+1))
-                unitsTickerL    = pd.Series(0, index=tickerIdx)
-                tickersL=SSell.index
-                unitsTickerL = unitsTickerRnd[tickersL]
+                # Sell random units of all the ticker bellow S_S #
+                unitsTickerRnd  = unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SSell.index)].apply(lambda x: np.random.randint(0, int(x)+1))
+                unitsTickerL    = unitsTickerRnd
+                tickersL=unitsTickerL.index
+#                 unitsTickerL = unitsTickerRnd[tickersL]
                 for ticker in tickersL:     
                     moved[ticker]        = "-"+str(unitsTickerL[ticker])+"#"+ticker
                 cash = cash - unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
@@ -138,9 +146,9 @@ for t, index in enumerate(data.index, start=1):
                 nSSell = S[S >  S_S]         
                 if not nSSell.empty:          # Buy random units of the ticker above S_S with highest score
                     # unitsTickerRnd  = unitsTicker.apply(lambda x: np.random.randint(0, int(x) + 1))
-                    unitsTickerRnd  = get_unitsTickerRnd(unitsTicker,pTicker,cash)
+                    unitsTickerRnd  = get_unitsTickerRnd(nSSell.index,pTicker[nSSell.index],cash)
                     if unitsTickerRnd is not None:
-                        unitsTickerH    = pd.Series(0, index=tickerIdx)
+#                        unitsTickerH    = pd.Series(0, index=tickerIdx)
                         tickersH=[nSSell.idxmax()]
                         unitsTickerH = unitsTickerRnd[tickersH]
                         cash = cash + unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
