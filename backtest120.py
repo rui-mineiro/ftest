@@ -8,15 +8,15 @@ import datetime
 
 # --- PARAMETERS ---
 
-tickerIdx     = ["AAPL" , "MSFT" , "DAVV.DE"  ]
-tickerPct     = [ 0.3 , 0.3 , 0.4 ]
+tickerIdx     = ["AAPL" , "MSFT" ]#, "DAVV.DE"  ]
+tickerPct     = [ 0.5   , 0.5    ]#, 0.4 ]
 
 start_date = "2024-01-01"
 end_date   = "2025-05-31"
 
 cash=1000
 
-S_H, S_B , S_S , C_K = -0.5/100, 1/100, -1/100, 5 # threshold and cooldown
+S_H, S_B , S_S , C_K = -5/100, 1/100, -1/100, 5 # threshold and cooldown
 
 
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
@@ -74,7 +74,7 @@ def get_unitsTickerRnd(tickerIdx, pTicker, cash, max_trials=10000):
         pTicker / pTicker.sum()
 
         rnd = pd.Series(
-            np.random.randint(1, cash * pTicker // pTicker.sum()+1) ,
+            np.random.randint(0, cash * pTicker // pTicker.sum()+1) ,
             index=tickers
         )
         
@@ -115,10 +115,10 @@ for t, index in enumerate(data.index, start=1):
                     tickersL=[nSBuy.idxmin()]
                     unitsTickerRnd  = unitsTicker[tickersL].apply(lambda x: np.random.randint(0, int(x)+1))
                     unitsTickerL = unitsTickerRnd[tickersL]
-                    cash = cash + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
-                    unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
                     for ticker in tickersL:
                         moved[ticker]    = "-"+str(unitsTickerL[ticker])+"#"+ticker
+                    cash = cash + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
+                    unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
                 
                 # Buy random units of all the tickers above S_B # Aqui
                 unitsTickerRnd  = get_unitsTickerRnd(SBuy.index,pTicker[SBuy.index],cash)
@@ -140,8 +140,8 @@ for t, index in enumerate(data.index, start=1):
 #                 unitsTickerL = unitsTickerRnd[tickersL]
                 for ticker in tickersL:     
                     moved[ticker]        = "-"+str(unitsTickerL[ticker])+"#"+ticker
-                cash = cash - unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
-                unitsTicker[tickersL] = unitsTicker[tickersL] + unitsTickerL[tickersL]
+                cash = cash  + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
+                unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
 
                 nSSell = S[S >  S_S]         
                 if not nSSell.empty:          # Buy random units of the ticker above S_S with highest score
@@ -151,11 +151,11 @@ for t, index in enumerate(data.index, start=1):
 #                        unitsTickerH    = pd.Series(0, index=tickerIdx)
                         tickersH=[nSSell.idxmax()]
                         unitsTickerH = unitsTickerRnd[tickersH]
-                        cash = cash + unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
-                        unitsTicker[tickersH] = unitsTicker[tickersH] - unitsTickerH[tickersH]
                         for ticker in tickersH:
                             moved[ticker]    = "+"+str(unitsTickerH[ticker])+"#"+ticker
-        S=pd.Series(0, index=tickerIdx)
+                        cash = cash - unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
+                        unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
+#        S=pd.Series(0, index=tickerIdx)
         C = C_K
 
     # update portfolio value
@@ -164,8 +164,6 @@ for t, index in enumerate(data.index, start=1):
     movedStr=''.join(moved.dropna().astype(str).tolist().copy())
     if not movedStr:
         movedStr=None
-
-
 
 
     records.append({
