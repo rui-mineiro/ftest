@@ -11,8 +11,8 @@ import pulp
 
 # --- PARAMETERS ---
 
-tickerIdx     = ["AAPL" , "MSFT" ]#, "DAVV.DE"  ]
-tickerPct     = [ 0.5   , 0.5    ]#, 0.4 ]
+tickerIdx     = ["AAPL" , "MSFT" , "DAVV.DE"  ]
+tickerPct     = [ 0.3   , 0.3    , 0.4 ]
 
 start_date = "2024-01-01"
 end_date   = "2025-05-31"
