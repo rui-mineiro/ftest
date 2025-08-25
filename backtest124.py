@@ -132,9 +132,8 @@ for t, index in enumerate(data.index, start=1):
                     cash = cash + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
                     unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
 
-                unitsTickerBuy=unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SBuy.index)].astype(int)    
-                                                        # Buy all units of all the tickers above S_B
-                unitsTickerBuy = get_unitsTickerBuy(unitsTickerBuy.index,pTicker[unitsTickerBuy.index],cash)
+                unitsTickerBuy=unitsTicker[SBuy.index]        # Buy all units of all the tickers above S_B
+                unitsTickerBuy = get_unitsTickerBuy(unitsTicker[SBuy.index],pTicker[SBuy.index],cash)
                 unitsTickerBuy = unitsTickerBuy[unitsTickerBuy>0]
                 if not unitsTickerBuy.empty:
                     tickersH=unitsTickerBuy.index
