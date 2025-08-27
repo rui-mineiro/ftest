@@ -12,7 +12,7 @@ import pulp
 # --- PARAMETERS ---
 
 tickerIdx = ["AAPL" , "MSFT" , "DAVV.DE"  ]
-W_N = 5
+W_N = 20
 tickerNum = len(tickerIdx)
 tickerPct = [ 1/tickerNum for _ in range(tickerNum) ]
 S_H       = [ -1/100 for _ in range(tickerNum) ]
@@ -185,8 +185,8 @@ for t, index in enumerate(data.index, start=1):
                     cash = cash  + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
                     unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
 
-        S=pd.Series(0, index=tickerIdx)
-        C = C_K
+#        S=pd.Series(0, index=tickerIdx)
+#        C = C_K
 
     # update portfolio value
     value = unitsTicker.mul(pTicker).sum() + cash
