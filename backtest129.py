@@ -11,19 +11,19 @@ import pulp
 
 # --- PARAMETERS ---
 
-tickerIdx = ["AAPL" , "MSFT" , "DAVV.DE"  ]
-W_N = 20
+tickerIdx = ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+W_N = 10
 tickerNum = len(tickerIdx)
 tickerPct = [ 1/tickerNum for _ in range(tickerNum) ]
-S_H       = [ -1/100 for _ in range(tickerNum) ]
+S_H       = [ -5/100 for _ in range(tickerNum) ]
 S_B       = [  2/100 for _ in range(tickerNum) ]
 S_S       = [ -2/100 for _ in range(tickerNum) ]
 C_K_w     = [  x/W_N for x in range(1,W_N+1) ]
 C_K       = pd.DataFrame([C_K_w] * tickerNum , index=tickerIdx).T
 
 
-start_date = "2024-01-01"
-end_date   = "2025-05-31"
+start_date = "2023-11-01"
+end_date   = "2025-01-31"
 
 cash=1000
 
@@ -35,8 +35,6 @@ cash=1000
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
 tickersPct = pd.DataFrame( [ tickerPct ], columns=tickerIdx)
 
-S = pd.Series(0 , index=tickerIdx)
-C = 0
 
 # --- DOWNLOAD DATA ---
 data = yf.download(list(tickers["ticker"]), start=start_date, end=end_date,auto_adjust=False)["Adj Close"]
@@ -148,7 +146,7 @@ for t, index in enumerate(data.index, start=1):
                     cash = cash + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
                     unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
 
-                unitsTickerBuy=unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SBuy.index)].astype(int)    
+                unitsTickerBuy=unitsTicker[unitsTicker.index.intersection(SBuy.index)].astype(int)    
                                                         # Buy all units of all the tickers above S_B
                 unitsTickerBuy = get_unitsTickerBuy(unitsTickerBuy.index,pTicker[unitsTickerBuy.index],cash)
                 unitsTickerBuy = unitsTickerBuy[unitsTickerBuy>0]
