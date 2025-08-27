@@ -40,7 +40,7 @@ def get_unitsTickerBuy(tickerIdx, pTicker, cash):
 
 # --- PARAMETERS ---
 
-tickerIdx = ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 start_date = "2023-11-01"
 end_date   = "2025-01-31"
 cash=1000
@@ -51,19 +51,19 @@ tickers    = pd.DataFrame( {'ticker' : tickerIdx })
 tickersPct = pd.DataFrame( [ tickerPct ], columns=tickerIdx)
 
 
-W         = [ 0.05 , 0.05 , 0.1 , 0.1 , 0.0 , 0.1 , 0.0 , 0.1 , 0.2 , 0.3  ]  # Window Real > 0 and sum = 1
-S_H       = [ -5/100 for _ in range(tickerNum) ]                        # Score Hold   Real*tickerNum < 0 [-0.05, -0.05]
-S_S       = [ -1/100 for _ in range(tickerNum) ]                        # Score Sell   Real*tickerNum < 0 [-0.01, -0.01]
-S_B       = [  1/100 for _ in range(tickerNum) ]                        # Score Buy    Real*tickerNum > 0 [ 0.01,  0.01]
+W         = [ 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 ]  # Window Real > 0 and sum = 1
+W_T       = [1/100 , 40/100]
+S_H       = [ -10/100 for _ in range(tickerNum) ]                        # Score Hold   Real*tickerNum < 0 [-0.05, -0.05]
+S_S       = [ -5/100 for _ in range(tickerNum) ]                        # Score Sell   Real*tickerNum < 0 [-0.01, -0.01]
+S_B       = [  5/100 for _ in range(tickerNum) ]                        # Score Buy    Real*tickerNum > 0 [ 0.01,  0.01]
 # C_K_w     = [  x/W_N for x in range(1,W_N+1)   ]
 # C_K       = pd.DataFrame([C_K_w] * tickerNum , index=tickerIdx).T
-C_K_w     = W
-C_K       = pd.DataFrame([C_K_w] * tickerNum , index=tickerIdx).T
+
+# C_K_w     = W
+# C_K       = pd.DataFrame([C_K_w] * tickerNum , index=tickerIdx).T
+C_K = pd.DataFrame([[x * w for x in W] for w in W_T] , index=tickerIdx).T
 
 W_N       = len(W)
-
-
-
 
 
 # --- DOWNLOAD DATA ---
@@ -253,11 +253,7 @@ moved_wide = df["moved"].apply(pd.Series)
 moved_wide["date"] = df["date"].values
 moved_wide=moved_wide.dropna()
 moved_wide.columns=['moved','date']
-# # moved_df = moved_wide.melt(id_vars="date", var_name="ticker", value_name="moved")
-# moved_df = moved_wide.melt(id_vars="date", value_name="moved")
-# moved_df = moved_df.dropna()
-# for ticker in moved_df["ticker"].unique():
-#    data = moved_df[moved_df["ticker"] == ticker]
+
 fig.add_trace(go.Scatter(
     x=moved_wide["date"], y=[df.loc[df["date"]==d, "value"].values[0] for d in moved_wide["date"]],
     mode="markers+text",
