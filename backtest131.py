@@ -40,7 +40,7 @@ def get_unitsTickerBuy(tickerIdx, pTicker, cash):
 
 # --- PARAMETERS ---
 
-tickerIdx = ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 start_date = "2023-11-01"
 end_date   = "2025-01-31"
 cash=1000
@@ -87,8 +87,9 @@ unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
 
 value = 0
 
-priceTicker = data.iloc[0]
-unitsTicker = get_unitsTickerBuy(tickerIdx,priceTicker,cash/2)
+priceTicker    = data.iloc[0]
+unitsTicker    = get_unitsTickerBuy(tickerIdx,priceTicker,cash/2)
+unitsTickerRef = get_unitsTickerBuy(tickerIdx,priceTicker,cash  )
 cash  = cash - unitsTicker.mul(priceTicker).sum()
 
 
@@ -203,6 +204,12 @@ for t, index in enumerate(data.index, start=1):
 
 
 df = pd.DataFrame(records)
+
+valueRef=unitsTickerRef.mul(pTicker).sum()
+print()
+print(f"Reference: {valueRef:.2f}€")
+print(f"Optimized: {value:.2f}€")
+
 
 # --- Step 0: Create subplot (1 row, 1 col here, but extendable) ---
 fig = make_subplots(rows=1, cols=1, specs=[[{"secondary_y": True}]])
