@@ -10,30 +10,23 @@ import pulp
 from env00 import *
 
 
-data , indicator = get_data(tickerIdx,start_date,end_date)
-rets = indicator.copy()
+data      = get_data(tickerIdx,start_date,end_date)
+indicator = get_indicator(data)
 
-# --- SIMULATION ---
-records = []
-unitsTicker    = pd.Series()  # Tickers Units
-unitsTickerH   = pd.Series()  # Tickers High >   S_K
-unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
-
-value = 0
 
 priceTicker    = data.iloc[0]
 unitsTicker    = get_unitsTickerBuy(tickerIdx,priceTicker,cash/2)
-unitsTickerRef = get_unitsTickerBuy(tickerIdx,priceTicker,cash  )
+unitsTickerRef = get_unitsTickerBuy2(tickerIdx,priceTicker,cash )
 cash  = cash - unitsTicker.mul(priceTicker).sum()
 
 
 
 
 for t, index in enumerate(data.index, start=1):
+
     pTicker = data.loc[index]
     date    = index
-
-    S = get_currentScore(indicator,W,t,index,tickerIdx)
+    S       = get_currentScore(indicator,W,t,index,tickerIdx)
     
     moved = ''
 
@@ -68,9 +61,10 @@ for t, index in enumerate(data.index, start=1):
                     cash = cash + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
                     unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
 
-                unitsTickerBuy=unitsTicker[unitsTicker.index.intersection(SBuy.index)].astype(int)    
+#                unitsTickerBuy=unitsTicker[unitsTicker.index.intersection(SBuy.index)].astype(int)    
+                unitsTickerBuy=unitsTicker[unitsTicker.index.intersection(SBuy.index)]
                                                         # Buy all units of all the tickers above S_B
-                unitsTickerBuy = get_unitsTickerBuy(unitsTickerBuy.index,pTicker[unitsTickerBuy.index],cash)
+                unitsTickerBuy = get_unitsTickerBuy2(unitsTickerBuy.index,pTicker[unitsTickerBuy.index],cash)
                 unitsTickerBuy = unitsTickerBuy[unitsTickerBuy>0]
                 if not unitsTickerBuy.empty:
                     tickersH=unitsTickerBuy.index
@@ -87,7 +81,7 @@ for t, index in enumerate(data.index, start=1):
                 nSSell = nSSell[nSSell > 0]
                 if not nSSell.empty:                     
                     tickersH=[nSSell.idxmax()]
-                    unitsTickerBuy = get_unitsTickerBuy(tickersH,pTicker[tickersH],cash)
+                    unitsTickerBuy = get_unitsTickerBuy2(tickersH,pTicker[tickersH],cash)
                     unitsTickerBuy = unitsTickerBuy[unitsTickerBuy>0]
                     if not unitsTickerBuy.empty:
                         unitsTickerH   = unitsTickerBuy.apply(lambda x: np.random.randint(0, int(x)+1))
