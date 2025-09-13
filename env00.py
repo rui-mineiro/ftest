@@ -14,10 +14,10 @@ import pulp
 
 # --- PARAMETERS ---
 
-tickerIdx = [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 start_date = "2023-11-01"
 end_date   = "2025-01-31"
-cash=1000
+cash=10000
 
 tickerNum = len(tickerIdx)
 tickerPct = [ 1/tickerNum for _ in range(tickerNum) ]
@@ -41,8 +41,8 @@ S_B       = [   5/100 for _ in range(tickerNum) ]                        # Score
 
 W_L  = 20                                                                     # Window Lenght
 W_V  = [  1 for x in range(1,W_L+1) ]                                         # Window Vector
-W_W  = [50/100 , 1]                                                           # Window Weights
-W    = pd.DataFrame([[x * w for x in W_V] for w in W_W] , index=tickerIdx).T    # Window
+W_TW  = [1 , 1 , 1 , 1 , 1 ]                               # Window tickerIdx Weights
+W    = pd.DataFrame([[x * w for x in W_V] for w in W_TW] , index=tickerIdx).T    # Window
 
 W_L       = len(W)
 
@@ -70,62 +70,54 @@ def get_currentScore(indicator,W,t,index,tickerIdx):
 
 
 
-def get_unitsTickerBuy2(tickerIdx, pTicker, cash):
+def get_unitsTickerBuy2(tickerIdx, pTicker, cash , lambda_disp=0.05):
     """
-    ILP: maximize sum(units[t]*price[t]) <= cash
-    Subject to: for all i,j selected, value_i <= 2 * value_j
-    (allows zero positions; ratio enforced only between selected tickers)
+    Choose integer units per ticker under cash.
+    Objective: maximize total invested - lambda_disp * (max(allocation) - min(allocation)),
+    where allocation[t] = units[t] * price[t].
+    Smaller lambda_disp -> prioritize value; larger -> equalize allocations more.
     """
     tickers = pd.Index(tickerIdx)
-    prices  = pd.Series(pTicker, index=tickers, dtype=float)
+    pTicker = pd.Series(pTicker).reindex(tickers)
 
-    # Upper bound per ticker: you can't buy more than cash // price
-    max_units = (np.floor(cash / prices).astype(int)).clip(lower=0)
+    # Model
+    prob = pulp.LpProblem("BalancedPortfolio", pulp.LpMaximize)
 
-    # If all max bounds are zero -> infeasible
-    if (max_units == 0).all():
-        return pd.Series(0, index=tickers, dtype=int)
+    # Vars
+    units = {t: pulp.LpVariable(f"units_{t}", lowBound=0, cat="Integer") for t in tickers}
+    alloc = {t: pulp.LpVariable(f"alloc_{t}", lowBound=0) for t in tickers}  # € invested in t
+    V = pulp.LpVariable("total_invested", lowBound=0)
+    a_max = pulp.LpVariable("alloc_max", lowBound=0)
+    a_min = pulp.LpVariable("alloc_min", lowBound=0)
 
-    prob = pulp.LpProblem("Portfolio_2x_ratio", pulp.LpMaximize)
+    # Link allocation and units; total and bounds for max/min
+    for t in tickers:
+        prob += alloc[t] == pTicker[t] * units[t]
+        prob += a_max >= alloc[t]
+        prob += a_min <= alloc[t]
 
-    # Decision vars
-    units = {
-        t: pulp.LpVariable(f"units_{t}", lowBound=0, upBound=int(max_units[t]), cat="Integer")
-        for t in tickers
-    }
-    # Binary selection: 1 if ticker is held (>=1 unit), else 0
-    y = {t: pulp.LpVariable(f"y_{t}", lowBound=0, upBound=1, cat="Binary") for t in tickers}
-
-    # Objective: maximize portfolio value
-    prob += pulp.lpSum(units[t] * prices[t] for t in tickers)
+    prob += V == pulp.lpSum(alloc[t] for t in tickers)
 
     # Budget
-    prob += pulp.lpSum(units[t] * prices[t] for t in tickers) <= cash
+    prob += V <= cash
 
-    # Link units and selection: if y=0 -> units=0 ; if y=1 -> units>=1 (when feasible)
-    for t in tickers:
-        prob += units[t] <= max_units[t] * y[t]
-        if max_units[t] >= 1:
-            prob += units[t] >= y[t]
+    # Objective: invest as much as possible while keeping allocations close
+    prob += V - lambda_disp * (a_max - a_min)
 
-    # Ratio constraint: for any two selected tickers i,j:
-    # value_i - 2*value_j <= M*(2 - y_i - y_j)
-    # Tight Big-M: total value cannot exceed cash
-    M = float(cash)
-    for ti in tickers:
-        for tj in tickers:
-            prob += units[ti]*prices[ti] - 2*units[tj]*prices[tj] <= M * (2 - y[ti] - y[tj])
+    # Solve
+    prob.solve(pulp.COIN_CMD(msg=0))
 
-    # Solve (your env shows COIN_CMD available)
-    status = prob.solve(pulp.COIN_CMD(msg=0))
+    # Extract
     if pulp.LpStatus[prob.status] != "Optimal":
-        return False
+        return pd.Series(0, index=tickers, dtype=int)
 
-    alloc = pd.Series({t: int(round(units[t].value() or 0)) for t in tickers})
-    # Safety: enforce budget (numerical tolerance)
-    if (alloc * prices).sum() > cash + 1e-6:
-        return False
-    return alloc
+    alloc_units = pd.Series({t: int(max(0, round(units[t].value()))) for t in tickers}, dtype=int)
+
+    # If nothing affordable, return zeros
+    if (alloc_units == 0).all():
+        return pd.Series(0, index=tickers, dtype=int)
+
+    return alloc_units
 
 
 
@@ -163,8 +155,8 @@ def get_data(tickerIdx,start_date,end_date):
     data = data.dropna()
     
     # Normalize
-    for ticker in tickers["ticker"]:
-        data[ticker]=data[ticker] / data[ticker].iloc[0]
+    # for ticker in tickers["ticker"]:
+    #     data[ticker]=data[ticker] / data[ticker].iloc[0]
 
     indicator = data.pct_change().dropna()
     data      = data.iloc[1:]

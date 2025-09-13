@@ -15,7 +15,7 @@ indicator = get_indicator(data)
 
 
 priceTicker    = data.iloc[0]
-unitsTicker    = get_unitsTickerBuy(tickerIdx,priceTicker,cash/2)
+unitsTicker    = get_unitsTickerBuy2(tickerIdx,priceTicker,cash/2)
 unitsTickerRef = get_unitsTickerBuy2(tickerIdx,priceTicker,cash )
 cash  = cash - unitsTicker.mul(priceTicker).sum()
 
@@ -204,7 +204,8 @@ fig.update_layout(
     title="Prices by Ticker",
     xaxis_title="Date",
     yaxis_title="Price",
-    template="plotly_white"
+    template="plotly_white",
+    yaxis_type="linear"   # logarithmic scale
 )
 
 fig.show()
