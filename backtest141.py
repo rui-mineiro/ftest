@@ -10,11 +10,13 @@ import pulp
 from env00 import *
 
 
-data      = get_data(tickerIdx,start_date,end_date)
-indicator = get_indicator(data)
+data          = get_data(tickerIdx,start_date,end_date)
+indicator_raw = get_indicator(data,indicators)
+indicator     = indicator_raw["Adj Close", "PCT01"].copy()
 
 
-priceTicker    = data.iloc[0]
+
+priceTicker    = data["Adj Close"].iloc[0]
 unitsTicker    = get_unitsTickerBuy2(tickerIdx,priceTicker,cash/2)
 unitsTickerRef = get_unitsTickerBuy2(tickerIdx,priceTicker,cash )
 cash  = cash - unitsTicker.mul(priceTicker).sum()
@@ -24,7 +26,7 @@ cash  = cash - unitsTicker.mul(priceTicker).sum()
 
 for t, index in enumerate(data.index, start=1):
 
-    pTicker = data.loc[index]
+    pTicker = data["Adj Close"].loc[index]
     date    = index
     S       = get_currentScore(indicator,W,t,index,tickerIdx)
     
@@ -139,11 +141,11 @@ price_wide = df["price"].apply(pd.Series)
 price_wide["date"] = df["date"].values   # attach the real dates
 price_df = price_wide.melt(id_vars="date", var_name="ticker", value_name="price")
 for ticker in price_df["ticker"].unique():
-    data = price_df[price_df["ticker"] == ticker]
+    plotData = price_df[price_df["ticker"] == ticker]
     fig.add_trace(
         go.Scatter(
-            x=data["date"],
-            y=data["price"],
+            x=plotData["date"],
+            y=plotData["price"],
             mode="lines",
             name=ticker
         ),
@@ -156,11 +158,11 @@ S_wide = df["S"].apply(pd.Series)
 S_wide["date"] = df["date"].values   # attach the real dates
 S_df = S_wide.melt(id_vars="date", var_name="ticker", value_name="Score")
 for ticker in S_df["ticker"].unique():
-    data = S_df[S_df["ticker"] == ticker]
+    plotData = S_df[S_df["ticker"] == ticker]
     fig.add_trace(
         go.Scatter(
-            x=data["date"],
-            y=data["Score"],
+            x=plotData["date"],
+            y=plotData["Score"],
             mode="lines",
             name="S"+ticker
         ),

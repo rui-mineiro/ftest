@@ -8,6 +8,7 @@ import numpy as np
 import datetime
 import itertools
 import pulp
+import re
 
 
 
@@ -15,6 +16,7 @@ import pulp
 # --- PARAMETERS ---
 
 tickerIdx = ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+indicators = ["MA05", "MA10", "MV05", "MV10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10"]
 start_date = "2023-11-01"
 end_date   = "2025-01-31"
 cash=10000
@@ -55,16 +57,7 @@ unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
 
 def get_currentScore(indicator,W,t,index,tickerIdx):
 
-    # update score
-    # S += rTicker
-    W_L = len(W)
-
-    if t < W_L+4:
-        S=pd.Series(0, index=tickerIdx)
-    else:
-        indicator_win = indicator.loc[:index].iloc[-W_L:]
-        # Score Values
-        S=pd.DataFrame( (W.values * indicator_win.values) , columns=tickerIdx).sum(axis=0)
+    S=indicator.loc[index]
     
     return S
 
@@ -151,20 +144,54 @@ def get_unitsTickerBuy(tickerIdx, pTicker, cash):
 
 def get_data(tickerIdx,start_date,end_date):
     # --- DOWNLOAD DATA ---
-    data = yf.download(list(tickers["ticker"]), start=start_date, end=end_date,auto_adjust=False)["Adj Close"]
+    data = yf.download(list(tickers["ticker"]), start=start_date, end=end_date,auto_adjust=False)
+    # data = yf.download(list(tickers["ticker"]), start=start_date, end=end_date,auto_adjust=False)["Adj Close"]
     data = data.dropna()
     
     # Normalize
     # for ticker in tickers["ticker"]:
     #     data[ticker]=data[ticker] / data[ticker].iloc[0]
 
-    indicator = data.pct_change().dropna()
     data      = data.iloc[1:]
 
     return data
 
-def get_indicator(data):
-    indicator = data.pct_change().dropna().reindex(data.index, fill_value=0)
 
-    return indicator
+def get_indicator(data: pd.DataFrame, indicators: list[str], fields=None) -> pd.DataFrame:
+
+    # data.columns must be a MultiIndex: level0=Price field, level1=Ticker
+    if fields is None:
+        fields = data.columns.get_level_values(0).unique()
+
+    cols = {}
+    for price_field in fields:
+        # subframe for one price field -> columns are tickers
+        df_field = data[price_field]
+
+        for ticker in df_field.columns:
+            s = df_field[ticker]
+            for ind in indicators:
+                m = re.search(r"\d+$", ind)
+                w = int(m.group()) if m else None
+
+                if ind.startswith("MA"):
+                    vals = s.rolling(w).mean().fillna(0)
+                elif ind.startswith("MV"):
+                    vals = s.rolling(w).std().fillna(0)
+                elif ind.startswith("EMA"):
+                    vals = s.ewm(span=w, adjust=False).mean().fillna(0)
+                elif ind.startswith("PCT"):
+                    vals = s.pct_change(periods=w).fillna(0)
+                else:
+                    raise ValueError(f"Unknown indicator {ind}")
+
+                cols[(price_field, ind, ticker)] = vals
+
+    out = pd.DataFrame(cols, index=data.index)
+    out.columns = pd.MultiIndex.from_tuples(out.columns, names=["Price", "Indicator", "Ticker"])
+    out = out.sort_index(axis=1, level=["Price","Indicator","Ticker"])
+
+    return out
+
+
 
