@@ -27,28 +27,10 @@ tickers    = pd.DataFrame( {'ticker' : tickerIdx })
 tickersPct = pd.DataFrame( [ tickerPct ], columns=tickerIdx)
 
 
-S_H       = [ -10/100 for _ in range(tickerNum) ]                        # Score Hold   Real*tickerNum < 0 [-0.05, -0.05]
-S_S       = [  -5/100 for _ in range(tickerNum) ]                        # Score Sell   Real*tickerNum < 0 [-0.01, -0.01]
-S_B       = [   5/100 for _ in range(tickerNum) ]                        # Score Buy    Real*tickerNum > 0 [ 0.01,  0.01]
+S_H       = [ -20/100 for _ in range(tickerNum) ]                        # Score Hold   Real*tickerNum < 0 [-0.05, -0.05]
+S_S       = [  -10/100 for _ in range(tickerNum) ]                        # Score Sell   Real*tickerNum < 0 [-0.01, -0.01]
+S_B       = [   10/100 for _ in range(tickerNum) ]                        # Score Buy    Real*tickerNum > 0 [ 0.01,  0.01]
 
-
-
-# W_N  = 5
-# W    = [  x/W_N for x in range(1,W_N+1) ]
-# C_K  = pd.DataFrame([W] * tickerNum , index=tickerIdx).T
-
-# W         = [ 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 ]  # Window Real > 0 and sum = 1
-# W_T       = [15/100 , 25/100]
-# C_K = pd.DataFrame([[x * w for x in W] for w in W_T] , index=tickerIdx).T
-
-# W_L  = 20                                                                     # Window Lenght
-# W_V  = [  1 for x in range(1,W_L+1) ]                                         # Window Vector
-# W_TW  = [1 , 1 , 1 , 1 , 1 ]                               # Window tickerIdx Weights
-# W    = pd.DataFrame([[x * w for x in W_V] for w in W_TW] , index=tickerIdx).T    # Window
-# 
-# W_L       = len(W)
-
-# --- SIMULATION ---
 records = []
 unitsTicker    = pd.Series()  # Tickers Units
 unitsTickerH   = pd.Series()  # Tickers High >   S_K
