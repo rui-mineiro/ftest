@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import itertools
 import pulp
-from env144 import *
+from env145 import *
 import plotly.io as pio
 
 pio.renderers.default = "browser"
@@ -24,7 +24,7 @@ cash  = cash - unitsTicker.mul(priceTicker).sum()
 
 for t, index in enumerate(data.index, start=1):
 
-    pTicker = data["Close"].loc[index]
+    pTicker = data["Adj Close"].loc[index]
     date    = index
     S       = get_currentScore(indicator,index)
     
@@ -73,12 +73,10 @@ for t, index in enumerate(data.index, start=1):
     # update portfolio value
     value = unitsTicker.mul(pTicker).sum() + cash
 
-
     if not moved:
         movedStr=None
     else:
         movedStr=moved
-
 
     records.append({
         "date":  date,       

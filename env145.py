@@ -16,17 +16,15 @@ import re
 # --- PARAMETERS ---
 
 tickerIdx = ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
-indicators = ["MA05", "MA10", "MV05", "MV10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10"]
-start_date = "2023-11-01"
-end_date   = "2025-01-31"
+indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10"]
+start_date = "2025-01-01"
+end_date   = "2025-09-16"
 cash=10000
 
 N = 6
 
 tickerNum = len(tickerIdx)
-tickerPct = [ 1/tickerNum for _ in range(tickerNum) ]
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
-tickersPct = pd.DataFrame( [ tickerPct ], columns=tickerIdx)
 
 
 S_H       = [  -1/100 for _ in range(tickerNum) ]                        # Score Hold   Real*tickerNum < 0 [-0.05, -0.05]
@@ -126,16 +124,29 @@ def get_unitsTickerBuy(tickerIdx, pTicker, cash):
     return alloc
 
 
+
+
 def get_data(tickerIdx,start_date,end_date):
     # --- DOWNLOAD DATA ---
     data = yf.download(list(tickers["ticker"]), start=start_date, end=end_date,auto_adjust=False)
+    # data = yf.download(list(tickers["ticker"]), start=start_date, end=end_date,auto_adjust=False)["Adj Close"]
     data = data.dropna()
+    
+    # Normalize
+    # for ticker in tickers["ticker"]:
+    #     data[ticker]=data[ticker] / data[ticker].iloc[0]
+
     data      = data.iloc[1:]
 
     return data
 
 
+
 def get_indicator(data: pd.DataFrame, indicators: list[str], fields=None) -> pd.DataFrame:
+
+
+    # Medida do tempo em que não é ultrapassado determinado limite
+    # Maximo e minimo nos ultimos X dias
 
     # data.columns must be a MultiIndex: level0=Price field, level1=Ticker
     if fields is None:
@@ -154,7 +165,7 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], fields=None) -> pd.
 
                 if ind.startswith("MA"):
                     vals = s.rolling(w).mean().fillna(0)
-                elif ind.startswith("MV"):
+                elif ind.startswith("MSTD"):
                     vals = s.rolling(w).std().fillna(0)
                 elif ind.startswith("EMA"):
                     vals = s.ewm(span=w, adjust=False).mean().fillna(0)
