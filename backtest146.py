@@ -7,16 +7,17 @@ import numpy as np
 import datetime
 import itertools
 import pulp
-from env142 import *
+from env146 import *
+import plotly.io as pio
 
-
+pio.renderers.default = "browser"
 data          = get_data(tickerIdx,start_date,end_date)
 indicator_raw = get_indicator(data,indicators)
-indicator     = indicator_raw["Adj Close", "PCT05"].copy()
+indicator     = indicator_raw["Adj Close", "PCT10"].copy()
 
 
 priceTicker    = data["Adj Close"].iloc[0]
-unitsTicker    = get_unitsTickerBuy2(tickerIdx,priceTicker,cash/2)
+unitsTicker    = pd.Series(0, index=tickerIdx, dtype=int)
 unitsTickerRef = get_unitsTickerBuy2(tickerIdx,priceTicker,cash )
 cash  = cash - unitsTicker.mul(priceTicker).sum()
 
@@ -29,13 +30,11 @@ for t, index in enumerate(data.index, start=1):
     
     moved = ''
 
-    if False:
-        C -= 1
-    else:
-        nSHold = S[S >  S_H]
+    if t % N == 0 :
+        # if Score of all existing tickers is <S_H then sell all and hold
         SHold  = S[S <= S_H]
+        nSHold = S[S >  S_H]
         if nSHold.empty and unitsTicker.sum()>0:
-            # Sell all positive number of units of all the tickers
             unitsTickerL = unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SHold.index)].astype(int)
             tickersL=unitsTickerL.index
             for ticker in tickersL:     
@@ -43,26 +42,10 @@ for t, index in enumerate(data.index, start=1):
             cash = cash + unitsTickerL.mul(pTicker[tickersL]).sum()
             unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL
         else:
+            # If there are tickes with score > S_B , buy all units of those tickers
             SBuy   = S[S >  S_B]
-            nSBuy  = S[S <= S_B]
-
-            if not SBuy.empty:                  # If there are some tickers above S_B 
-                                                # Sell random units of ticker with negative value bellow S_B with lowest score  # Not random ?!!!
-                nSBuy  = S[S <= S_B]
-                nSBuy  = nSBuy[nSBuy < 0]
-                unitsTickerSell=unitsTicker[unitsTicker[unitsTicker>0].index.intersection(nSBuy.index)].astype(int)
-                if not unitsTickerSell.empty:
-                    tmpS         = nSBuy[unitsTickerSell.index]
-                    tickersL     = [tmpS.idxmin()]
-                    unitsTickerL = unitsTicker[tickersL].astype(int)
-                    for ticker in tickersL:
-                        moved    = moved+"-"+str(unitsTickerL[ticker])+"#"+ticker
-                    cash = cash + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
-                    unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
-
-#                unitsTickerBuy=unitsTicker[unitsTicker.index.intersection(SBuy.index)].astype(int)    
-                unitsTickerBuy=unitsTicker[unitsTicker.index.intersection(SBuy.index)]
-                                                        # Buy all units of all the tickers above S_B
+            if not SBuy.empty:
+                unitsTickerBuy = unitsTicker[unitsTicker.index.intersection(SBuy.index)]
                 unitsTickerBuy = get_unitsTickerBuy2(unitsTickerBuy.index,pTicker[unitsTickerBuy.index],cash)
                 unitsTickerBuy = unitsTickerBuy[unitsTickerBuy>0]
                 if not unitsTickerBuy.empty:
@@ -73,25 +56,11 @@ for t, index in enumerate(data.index, start=1):
                     cash = cash - unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
                     unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
 
+            # If there are tickes with score < S_S , sell all units of those tickers
             SSell  = S[S <= S_S]
-            if not SSell.empty:                # If there are some tickers bellow S_S
-                                               # Buy random units of the ticker with positive value above S_S with higest score
-                nSSell = S[S >  S_S]
-                nSSell = nSSell[nSSell > 0]
-                if not nSSell.empty:                     
-                    tickersH=[nSSell.idxmax()]
-                    unitsTickerBuy = get_unitsTickerBuy2(tickersH,pTicker[tickersH],cash)
-                    unitsTickerBuy = unitsTickerBuy[unitsTickerBuy>0]
-                    if not unitsTickerBuy.empty:
-                        unitsTickerH   = unitsTickerBuy.apply(lambda x: np.random.randint(0, int(x)+1))
-                        for ticker in tickersH:
-                            moved    = moved+"+"+str(unitsTickerH[ticker])+"#"+ticker
-                        cash = cash - unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
-                        unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
-
-                                                  # Sell random units of all the ticker bellow S_S #
-                unitsTickerSell=unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SSell.index)].astype(int)
-                unitsTickerSell=unitsTickerSell[unitsTickerSell>0]
+            if not SSell.empty:
+                unitsTickerSell = unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SSell.index)].astype(int)
+                unitsTickerSell = unitsTickerSell[unitsTickerSell>0]
                 if not unitsTickerSell.empty:
                     unitsTickerL    = unitsTickerSell
                     tickersL=unitsTickerL.index
@@ -104,12 +73,10 @@ for t, index in enumerate(data.index, start=1):
     # update portfolio value
     value = unitsTicker.mul(pTicker).sum() + cash
 
-
     if not moved:
         movedStr=None
     else:
         movedStr=moved
-
 
     records.append({
         "date":  date,       
