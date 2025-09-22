@@ -9,7 +9,9 @@ import datetime
 import itertools
 import pulp
 import re
-
+import re
+import pandas as pd
+import numpy as np
 
 
 
@@ -17,7 +19,7 @@ import re
 
 tickerIdx = ["AAPL" ] # , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
-indicators = ["TRMA05", "TRSTD10" , "MID05" , "MID10" ]  # True Range and Median Price with previous close
+indicators = ["TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
 start_date = "2025-01-01"
 end_date   = "2025-09-16"
 cash=10000
@@ -114,64 +116,100 @@ def get_data(tickerIdx,start_date,end_date):
 
 
 
+
+
 def get_indicator(data: pd.DataFrame, indicators: list[str], fields=None) -> pd.DataFrame:
-    # data.columns: level0=Price field (e.g., 'Open','High','Low','Close'), level1=Ticker
+    """
+    data.columns: MultiIndex with level0=Price field ('Open','High','Low','Close', ...)
+                  level1=Ticker
+    indicators: list like ['TR','TRMA05','TRSTD10','MID','MIDMA10','MIDSTD05', ...]
+    """
     if fields is None:
         fields = data.columns.get_level_values(0).unique()
 
     cols = {}
 
-    # ---------- True Range rolling stats (TRMAw, TRSTDw) ----------
-    need_tr = any(ind.startswith(("TRMA", "TRSTD")) for ind in indicators)
-    if need_tr:
-        try:
-            H = data["High"]; L = data["Low"]; C = data["Close"]
-        except KeyError:
-            raise ValueError("True Range needs 'High','Low','Close' in data columns")
-
-        for ticker in H.columns.intersection(L.columns).intersection(C.columns):
-            prevC = C[ticker].shift(1)
-            tr = pd.concat([(H[ticker]-L[ticker]),
-                            (H[ticker]-prevC).abs(),
-                            (L[ticker]-prevC).abs()], axis=1).max(axis=1)
-            for ind in indicators:
-                m = re.search(r"\d+$", ind); w = int(m.group()) if m else None
-                if ind.startswith("TRMA"):
-                    if not w: raise ValueError("TRMA requires a window, e.g., TRMA14")
-                    cols[("TR", f"MA{w}",   ticker)] = tr.rolling(w).mean().fillna(0)
-                elif ind.startswith("TRSTD"):
-                    if not w: raise ValueError("TRSTD requires a window, e.g., TRSTD14")
-                    cols[("TR", f"MSTD{w}", ticker)] = tr.rolling(w).std(ddof=0).fillna(0)
-
-    # ---------- MID with previous close (MIDw => rolling mean over MID base) ----------
+    # ---- Preload OHLC if needed for TR/MID ----
+    need_tr = any(ind.startswith("TR") for ind in indicators)
     need_mid = any(ind.startswith("MID") for ind in indicators)
-    if need_mid:
+    H = L = C = O = None
+
+    if need_tr or need_mid:
         try:
-            O = data["Open"]; H = data["High"]; L = data["Low"]; C = data["Close"]
-        except KeyError:
-            raise ValueError("MID needs 'Open','High','Low','Close' in data columns")
+            H = data["High"]
+            L = data["Low"]
+            C = data["Close"]
+            O = data["Open"]
+        except KeyError as e:
+            raise ValueError("TR/MID need 'Open','High','Low','Close' in data columns") from e
 
-        for ticker in O.columns.intersection(H.columns).intersection(L.columns).intersection(C.columns):
-            mid_base = (C[ticker].shift(1) + O[ticker] + H[ticker] + L[ticker]) / 4.0
+    # ---- TRUE RANGE + rolling stats ----
+    if need_tr:
+        common_tickers = H.columns.intersection(L.columns).intersection(C.columns)
+        for t in common_tickers:
+            prevC = C[t].shift(1)
+            tr = pd.concat([(H[t]-L[t]),
+                            (H[t]-prevC).abs(),
+                            (L[t]-prevC).abs()], axis=1).max(axis=1)
+
+            # raw TR
+            if "TR" in indicators:
+                cols[("TR", "TR", t)] = tr.fillna(0)
+
+            # TRMAxx / TRSTDxx
             for ind in indicators:
-                m = re.search(r"\d+$", ind); w = int(m.group()) if m else None
-                if ind.startswith("MID"):
-                    if not w: raise ValueError("MID requires a window, e.g., MID05 or MID10")
-                    cols[("MID", f"MA{w}", ticker)] = mid_base.rolling(w).mean().fillna(0)
+                if ind.startswith("TRMA"):
+                    m = re.search(r"\d+$", ind)
+                    if not m:
+                        raise ValueError(f"{ind} requires a numeric window, e.g., TRMA14")
+                    w = int(m.group())
+                    cols[("TR", ind, t)] = tr.rolling(w).mean().fillna(0)
+                elif ind.startswith("TRSTD"):
+                    m = re.search(r"\d+$", ind)
+                    if not m:
+                        raise ValueError(f"{ind} requires a numeric window, e.g., TRSTD14")
+                    w = int(m.group())
+                    cols[("TR", ind, t)] = tr.rolling(w).std(ddof=0).fillna(0)
 
-    # ---------- Generic per-field indicators (MA, MSTD, EMA, PCT) ----------
+    # ---- MID price + rolling stats ----
+    if need_mid:
+        common_tickers = H.columns.intersection(L.columns).intersection(C.columns).intersection(O.columns)
+        for t in common_tickers:
+            mid = (C[t].shift(1) + O[t] + H[t] + L[t]) / 4.0
+
+            if "MID" in indicators:
+                cols[("MID", "MID", t)] = mid.fillna(0)
+
+            for ind in indicators:
+                if ind.startswith("MIDMA"):
+                    m = re.search(r"\d+$", ind)
+                    if not m:
+                        raise ValueError(f"{ind} requires a numeric window, e.g., MIDMA14")
+                    w = int(m.group())
+                    cols[("MID", ind, t)] = mid.rolling(w).mean().fillna(0)
+                elif ind.startswith("MIDSTD"):
+                    m = re.search(r"\d+$", ind)
+                    if not m:
+                        raise ValueError(f"{ind} requires a numeric window, e.g., MIDSTD14")
+                    w = int(m.group())
+                    cols[("MID", ind, t)] = mid.rolling(w).std(ddof=0).fillna(0)
+
+    # ---- Existing per-field indicators (MA, MSTD, EMA, PCT) ----
     for price_field in fields:
         if price_field not in data.columns.get_level_values(0):
             continue
         df_field = data[price_field]
+
         for ticker in df_field.columns:
             s = df_field[ticker]
             for ind in indicators:
-                m = re.search(r"\d+$", ind); w = int(m.group()) if m else None
-                if ind.startswith("MA")   and not ind.startswith(("TRMA","MID")):
+                m = re.search(r"\d+$", ind)
+                w = int(m.group()) if m else None
+
+                if ind.startswith("MA") and not ind.startswith(("TRMA", "MIDMA")):
                     if not w: raise ValueError("MA requires a window, e.g., MA20")
                     vals = s.rolling(w).mean().fillna(0)
-                elif ind.startswith("MSTD") and not ind.startswith("TRSTD"):
+                elif ind.startswith("MSTD") and not ind.startswith(("TRSTD", "MIDSTD")):
                     if not w: raise ValueError("MSTD requires a window, e.g., MSTD20")
                     vals = s.rolling(w).std(ddof=0).fillna(0)
                 elif ind.startswith("EMA"):
@@ -181,12 +219,13 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], fields=None) -> pd.
                     if not w: raise ValueError("PCT requires periods, e.g., PCT1")
                     vals = s.pct_change(periods=w).fillna(0)
                 else:
-                    continue
+                    continue  # handled above or not applicable
+
                 cols[(price_field, ind, ticker)] = vals
 
     out = pd.DataFrame(cols, index=data.index)
     out.columns = pd.MultiIndex.from_tuples(out.columns, names=["Price", "Indicator", "Ticker"])
-    out = out.sort_index(axis=1, level=["Price","Indicator","Ticker"])
+    out = out.sort_index(axis=1, level=["Price", "Indicator", "Ticker"])
     return out
 
 
