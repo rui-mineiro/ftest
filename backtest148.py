@@ -13,7 +13,7 @@ from env_plot_01 import *
 
 data          = get_data(tickerIdx,start_date,end_date)
 indicator_raw = get_indicator(data,indicators)
-indicator     = indicator_raw["TR03"].copy()
+indicator     = indicator_raw[indicators[0]].copy()
 
 # indicator_raw[("TR","TR")]
 # indicator_raw.loc[:, [("TR","TR" ,"AAPL"), ("MID","MID", "AAPL")]]
@@ -99,5 +99,5 @@ print(f"Reference: {valueRef:.2f}€")
 print(f"Optimized: {value:.2f}€")
 
 # plot_fig00(df)
-plot_fig01(df)
+plot_fig01(indicator_raw)
 

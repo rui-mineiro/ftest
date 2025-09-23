@@ -20,8 +20,8 @@ import numpy as np
 tickerIdx = ["AAPL" ]   #, "MSFT" , "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
-indicators = [ "TR03" , "MID03"]  # True Range and Median Price with previous close
-start_date = "2025-09-05"
+indicators = [ "TR002" , "MID002"]  # True Range and Median Price with previous close
+start_date = "2025-01-05"
 end_date   = "2025-09-20"
 cash=10000
 
@@ -126,8 +126,8 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
     indicators: list like ['TR','TRMA05','TRSTD10','MID','MIDMA10','MIDSTD05', ...]
     """
 
-    cols = {}
-
+    cols       = {}
+    
     # ---- Preload OHLC if needed for TR/MID ----
     need_tr = any(ind.startswith("TR0") for ind in indicators)
     need_mid = any(ind.startswith("MID0") for ind in indicators)
@@ -172,7 +172,10 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     High  = H[t].rolling(w).max()
                     mid = (Cprev+Open+Low+High) / 4.0
                     cols[( ind, t)] = mid
+            cols[("High", t)] = H[t]
+            cols[("Low" , t)] = L[t]
 
+    
     out = pd.DataFrame(cols, index=data.index)
     out.columns = pd.MultiIndex.from_tuples(out.columns, names=["Indicator", "Ticker"])
     out = out.sort_index(axis=1, level=["Indicator", "Ticker"])
