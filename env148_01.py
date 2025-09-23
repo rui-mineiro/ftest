@@ -19,7 +19,8 @@ import numpy as np
 
 tickerIdx = ["AAPL"  ]   #, "MSFT" , "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
-indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
+# indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
+indicators = [ "TR03" , "MID03"]  # True Range and Median Price with previous close
 start_date = "2025-09-05"
 end_date   = "2025-09-20"
 cash=10000
@@ -128,95 +129,49 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
     cols = {}
 
     # ---- Preload OHLC if needed for TR/MID ----
-    need_tr = any(ind.startswith("TR") for ind in indicators)
-    need_mid = any(ind.startswith("MID") for ind in indicators)
+    need_tr = any(ind.startswith("TR0") for ind in indicators)
+    need_mid = any(ind.startswith("MID0") for ind in indicators)
     H = L = C = O = None
 
     if need_tr or need_mid:
         try:
-            H = data["High"]
-            L = data["Low"]
-            C = data["Close"]
-            O = data["Open"]
+            H     = data["High"]
+            L     = data["Low"]
+            C     = data["Close"]
+            O     = data["Open"]
         except KeyError as e:
             raise ValueError("TR/MID need 'Open','High','Low','Close' in data columns") from e
 
     # ---- TRUE RANGE + rolling stats ----
-    if need_tr:
-        common_tickers = H.columns.intersection(L.columns).intersection(C.columns)
-        for t in common_tickers:
-            prevC = C[t].shift(1)
-            tr = pd.concat([(H[t]-L[t]),
-                            (H[t]-prevC).abs(),
-                            (L[t]-prevC).abs()], axis=1).max(axis=1)
-
-            # raw TR
-            if "TR" in indicators:
-                cols[("TR" , t)] = tr.fillna(0)
-
-            # TRMAxx / TRSTDxx
-            for ind in indicators:
-                if ind.startswith("TRMA"):
-                    m = re.search(r"\d+$", ind)
-                    if not m:
-                        raise ValueError(f"{ind} requires a numeric window, e.g., TRMA14")
-                    w = int(m.group())
-                    cols[(ind, t)] = tr.rolling(w).mean().fillna(0)
-                elif ind.startswith("TRSTD"):
-                    m = re.search(r"\d+$", ind)
-                    if not m:
-                        raise ValueError(f"{ind} requires a numeric window, e.g., TRSTD14")
-                    w = int(m.group())
-                    cols[( ind, t)] = tr.rolling(w).std(ddof=0).fillna(0)
-
-    # ---- MID price + rolling stats ----
-    if need_mid:
+    if need_tr or need_mid:
         common_tickers = H.columns.intersection(L.columns).intersection(C.columns).intersection(O.columns)
         for t in common_tickers:
-            mid = (C[t].shift(1) + O[t] + H[t] + L[t]) / 4.0
-
-            if "MID" in indicators:
-                cols[("MID", t)] = mid.fillna(0)
-
             for ind in indicators:
-                if ind.startswith("MIDMA"):
+                # TR0xx                
+                if ind.startswith("TR0"):
                     m = re.search(r"\d+$", ind)
                     if not m:
-                        raise ValueError(f"{ind} requires a numeric window, e.g., MIDMA14")
+                        raise ValueError(f"{ind} requires a numeric window, e.g., TR0010")
                     w = int(m.group())
-                    cols[(ind, t)] = mid.rolling(w).mean().fillna(0)
-                elif ind.startswith("MIDSTD"):
+                    Cprev = C[t].shift(w)
+                    Low  = L[t].rolling(w).min()
+                    High = H[t].rolling(w).max()
+                    tr = pd.concat([(High-Low),
+                                    (High-Cprev).abs(),
+                                    (Low-Cprev).abs()], axis=1).max(axis=1)
+                    cols[(ind, t)] = tr
+                # MID0xx                                    
+                elif ind.startswith("MID0"):
                     m = re.search(r"\d+$", ind)
                     if not m:
-                        raise ValueError(f"{ind} requires a numeric window, e.g., MIDSTD14")
+                        raise ValueError(f"{ind} requires a numeric window, e.g., MID0010")
                     w = int(m.group())
-                    cols[(ind, t)] = mid.rolling(w).std(ddof=0).fillna(0)
-
-    # ---- Existing per-field indicators (MA, MSTD, EMA, PCT) ----
-    df_field = data[price_field]
-    
-    for ticker in df_field.columns:
-        s = df_field[ticker]
-        for ind in indicators:
-            m = re.search(r"\d+$", ind)
-            w = int(m.group()) if m else None
-    
-            if ind.startswith("MA"):
-                if not w: raise ValueError("MA requires a window, e.g., MA20")
-                vals = s.rolling(w).mean().fillna(0)
-            elif ind.startswith("MSTD") and not ind.startswith(("TRSTD", "MIDSTD")):
-                if not w: raise ValueError("MSTD requires a window, e.g., MSTD20")
-                vals = s.rolling(w).std(ddof=0).fillna(0)
-            elif ind.startswith("EMA"):
-                if not w: raise ValueError("EMA requires a span, e.g., EMA20")
-                vals = s.ewm(span=w, adjust=False).mean().fillna(0)
-            elif ind.startswith("PCT"):
-                if not w: raise ValueError("PCT requires periods, e.g., PCT1")
-                vals = s.pct_change(periods=w).fillna(0)
-            else:
-                continue  # handled above or not applicable
-    
-            cols[(ind, ticker)] = vals
+                    Cprev = C[t].shift(w)
+                    Open  = O[t].rolling(w).min()
+                    Low   = L[t].rolling(w).min()
+                    High  = H[t].rolling(w).max()
+                    mid = (Cprev+Open+Low+High) / 4.0
+                    cols[( ind, t)] = mid
 
     out = pd.DataFrame(cols, index=data.index)
     out.columns = pd.MultiIndex.from_tuples(out.columns, names=["Indicator", "Ticker"])
