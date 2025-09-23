@@ -11,9 +11,12 @@ from env_plot_01 import *
 
 
 
-data          = get_data(tickerIdx,start_date,end_date)
-indicator_raw = get_indicator(data,indicators)
-indicator     = indicator_raw[indicators[0]].copy()
+data               = get_data(tickerIdx,start_date,end_date)
+indicator_raw      = get_indicator(data,indicators)
+SL_H , SL_S , SL_B = get_ScoreLimits(data)   # Score Limit Hold , Sell and Buy
+indicator          = indicator_raw[indicatorScore]
+indicator.columns  = indicator.columns.droplevel(0)
+
 
 # indicator_raw[("TR","TR")]
 # indicator_raw.loc[:, [("TR","TR" ,"AAPL"), ("MID","MID", "AAPL")]]
@@ -27,9 +30,11 @@ cash  = cash - unitsTicker.mul(priceTicker).sum()
 
 for t, index in enumerate(data.index, start=1):
 
-    pTicker = data["Adj Close"].loc[index]
-    date    = index
-    S       = get_currentScore(indicator,index)
+    pTicker         = data["Adj Close"].loc[index]
+    date            = index
+    S               = get_currentScore(indicator,index)
+    S_H , S_S , S_B = SL_H.loc[index] , SL_S.loc[index] , SL_B.loc[index]
+
     
     moved = ''
 

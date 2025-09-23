@@ -17,10 +17,11 @@ import numpy as np
 
 # --- PARAMETERS ---
 
-tickerIdx = ["AAPL" ]   #, "MSFT" , "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = ["AAPL" , "MSFT" ]   # , "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
 indicators = [ "TR002" , "MID002"]  # True Range and Median Price with previous close
+indicatorScore = [ "MID002" ]
 start_date = "2025-01-05"
 end_date   = "2025-09-20"
 cash=10000
@@ -31,15 +32,22 @@ tickerNum = len(tickerIdx)
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
 
 
-S_H       = [  -1/100 for _ in range(tickerNum) ]                        # Score Hold   Real*tickerNum < 0 [-0.05, -0.05]
-S_S       = [  -1/100 for _ in range(tickerNum) ]                        # Score Sell   Real*tickerNum < 0 [-0.01, -0.01]
-S_B       = [   1/100 for _ in range(tickerNum) ]                        # Score Buy    Real*tickerNum > 0 [ 0.01,  0.01]
+# S_H       = [  -1/100 for _ in range(tickerNum) ]                        # Score Hold   Real*tickerNum < 0 [-0.05, -0.05]
+# S_S       = [  -1/100 for _ in range(tickerNum) ]                        # Score Sell   Real*tickerNum < 0 [-0.01, -0.01]
+# S_B       = [   1/100 for _ in range(tickerNum) ]                        # Score Buy    Real*tickerNum > 0 [ 0.01,  0.01]
 
 records = []
 unitsTicker    = pd.Series()  # Tickers Units
 unitsTickerH   = pd.Series()  # Tickers High >   S_K
 unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
 
+def get_ScoreLimits(data):
+
+    S_S=data["High"]
+    S_B=data["Low" ]
+    S_H=data["High"]
+
+    return S_H , S_S , S_B
 
 def get_currentScore(indicator,index):
 
