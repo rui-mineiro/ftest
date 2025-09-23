@@ -7,13 +7,13 @@ import numpy as np
 import datetime
 import itertools
 import pulp
-from env148 import *
+from env148_01 import *
 import plotly.io as pio
 
 pio.renderers.default = "browser"
 data          = get_data(tickerIdx,start_date,end_date)
 indicator_raw = get_indicator(data,indicators)
-indicator     = indicator_raw[("TR","TR")].copy()
+indicator     = indicator_raw["TR"].copy()
 
 # indicator_raw[("TR","TR")]
 # indicator_raw.loc[:, [("TR","TR" ,"AAPL"), ("MID","MID", "AAPL")]]
