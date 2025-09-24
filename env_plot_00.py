@@ -33,22 +33,26 @@ def plot_fig00(df):
     
     
     
-    S_wide = df["S"].apply(pd.Series)
-    S_wide["date"] = df["date"].values   # attach the real dates
-    S_df = S_wide.melt(id_vars="date", var_name="ticker", value_name="Score")
-    for ticker in S_df["ticker"].unique():
-        plotData = S_df[S_df["ticker"] == ticker]
-        fig.add_trace(
-            go.Scatter(
-                x=plotData["date"],
-                y=plotData["Score"],
-                mode="lines",
-                name="S"+ticker
-            ),
-            row=1, col=1
-        )
+#    S_wide = df["S"].apply(pd.Series)
+#    S_wide["date"] = df["date"].values   # attach the real dates
+#    S_df = S_wide.melt(id_vars="date", var_name="ticker", value_name="Score")
+#    for ticker in S_df["ticker"].unique():
+#        plotData = S_df[S_df["ticker"] == ticker]
+#        fig.add_trace(
+#            go.Scatter(
+#                x=plotData["date"],
+#                y=plotData["Score"],
+#                mode="lines",
+#                name="S"+ticker
+#            ),
+#            row=1, col=1
+#        )
     
-    
+
+
+### Start Switches + Value 
+
+
     moved_wide = df["moved"].apply(pd.Series)
     if len(moved_wide.columns) == 1:
         moved_wide["date"] = df["date"].values
@@ -66,7 +70,6 @@ def plot_fig00(df):
         )
     
     
-    
     fig.add_trace(
         go.Scatter(
             x=df["date"],
@@ -78,12 +81,14 @@ def plot_fig00(df):
         row=1, col=1 ,
         secondary_y=True
     )
+
+### END Switches + Value     
     
-    
+
+### Start Units Buy / Sell
     units_wide = df["units"].apply(pd.Series)
     price_wide = df["price"].apply(pd.Series)
     unitsValue_wide=price_wide.mul(units_wide)
-    
     unitsValue_wide["date"] = df["date"].values   # attach the real dates
     units_df = unitsValue_wide.melt(id_vars="date", var_name="ticker", value_name="units")
     for ticker in units_df["ticker"].unique():
@@ -93,11 +98,11 @@ def plot_fig00(df):
                 x=plotData["date"],
                 y=plotData["units"],
                 mode="lines",
-                name=ticker
+                name="#Units "+ticker+" x Price"
             ),
             row=2, col=1
         )
-    
+### End Units Buy / Sell
     
     # --- Step 4: Layout ---
     fig.update_layout(

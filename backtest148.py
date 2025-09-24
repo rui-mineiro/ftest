@@ -1,5 +1,4 @@
 import yfinance as yf
-# import pandas as pd
 import random
 import numpy as np
 import datetime
@@ -9,13 +8,12 @@ from env148_01 import *
 from env_plot_00 import *
 from env_plot_01 import *
 
-
-
 data               = get_data(tickerIdx,start_date,end_date)
 indicator_raw      = get_indicator(data,indicators)
-SL_H , SL_S , SL_B = get_ScoreLimits(data)   # Score Limit Hold , Sell and Buy
+SL_H , SL_S , SL_B , SL_H_Prev , SL_S_Prev , SL_B_Prev = get_ScoreLimits(data)   # Score Limit Hold , Sell and Buy
 indicator          = indicator_raw[indicatorScore]
 indicator.columns  = indicator.columns.droplevel(0)
+indicator_Prev     = indicator.shift(1)
 
 
 # indicator_raw[("TR","TR")]
@@ -28,20 +26,22 @@ unitsTickerRef = get_unitsTickerBuy2(tickerIdx,priceTicker,cash )
 cash  = cash - unitsTicker.mul(priceTicker).sum()
 
 
-for t, index in enumerate(data.index, start=1):
+for _ , index in enumerate(data.index, start=1):
 
     pTicker         = data["Adj Close"].loc[index]
     date            = index
-    S               = get_currentScore(indicator,index)
+    S , S_Prev      = get_currentScore(indicator,indicator_Prev,index)
     S_H , S_S , S_B = SL_H.loc[index] , SL_S.loc[index] , SL_B.loc[index]
+    S_H_Prev , S_S_Prev , S_B_Prev  =   SL_H_Prev.loc[index] , SL_S_Prev.loc[index] , SL_B_Prev.loc[index]
 
     
     moved = ''
 
-    if t % N == 0 :
+    if t > 0 :
+        t-=1
         # if Score of all existing tickers is <S_H then sell all and hold
-        SHold  = S[S <= S_H]
-        nSHold = S[S >  S_H]
+        SHold  = S[(S_S_Prev > S_Prev ) & (S_S < S )]
+        nSHold = S[~(S_S_Prev > S_Prev ) & (S_S < S )]
         if nSHold.empty and unitsTicker.sum()>0:
             unitsTickerL = unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SHold.index)].astype(int)
             tickersL=unitsTickerL.index
@@ -51,7 +51,7 @@ for t, index in enumerate(data.index, start=1):
             unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL
         else:
             # If there are tickes with score > S_B , buy all units of those tickers
-            SBuy   = S[S >  S_B]
+            SBuy   = S[(S_B_Prev < S_Prev ) & ( S_B > S )]
             if not SBuy.empty:
                 unitsTickerBuy = unitsTicker[unitsTicker.index.intersection(SBuy.index)]
                 unitsTickerBuy = get_unitsTickerBuy2(unitsTickerBuy.index,pTicker[unitsTickerBuy.index],cash)
@@ -65,7 +65,7 @@ for t, index in enumerate(data.index, start=1):
                     unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
 
             # If there are tickes with score < S_S , sell all units of those tickers
-            SSell  = S[S <= S_S]
+            SSell  = S[(S_S_Prev > S_Prev ) & (S_S < S )]
             if not SSell.empty:
                 unitsTickerSell = unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SSell.index)].astype(int)
                 unitsTickerSell = unitsTickerSell[unitsTickerSell>0]
@@ -76,6 +76,10 @@ for t, index in enumerate(data.index, start=1):
                         moved        = moved+"-"+str(unitsTickerL[ticker])+"#"+ticker
                     cash = cash  + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
                     unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
+    else:
+        # t=random.randint(2,N)
+        t=2
+
 
 
     # update portfolio value
@@ -103,6 +107,10 @@ print()
 print(f"Reference: {valueRef:.2f}€")
 print(f"Optimized: {value:.2f}€")
 
-# plot_fig00(df)
-plot_fig01(indicator_raw)
+plot_fig00(df)
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
+
+for ticker in tickerIdx:
+    plot_fig01(indicator_raw_swap[ticker],ticker)
 

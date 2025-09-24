@@ -3,7 +3,6 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import random
 import numpy as np
 import datetime
 import itertools
@@ -17,7 +16,7 @@ import numpy as np
 
 # --- PARAMETERS ---
 
-tickerIdx = ["AAPL" , "MSFT" ]   # , "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = [ "AAPL"  , "MSFT"  ]   #  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
 indicators = [ "TR002" , "MID002"]  # True Range and Median Price with previous close
@@ -26,7 +25,8 @@ start_date = "2025-01-05"
 end_date   = "2025-09-20"
 cash=10000
 
-N = 6
+N = 10
+t = 1
 
 tickerNum = len(tickerIdx)
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
@@ -43,17 +43,21 @@ unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
 
 def get_ScoreLimits(data):
 
+    S_H=data["High"]
     S_S=data["High"]
     S_B=data["Low" ]
-    S_H=data["High"]
 
-    return S_H , S_S , S_B
+    SL_H_Prev , SL_S_Prev , SL_B_Prev = S_H.shift(1) , S_S.shift(1) , S_B.shift(1)
 
-def get_currentScore(indicator,index):
 
-    S=indicator.loc[index]
+    return S_H , S_S , S_B , SL_H_Prev , SL_S_Prev , SL_B_Prev
+
+def get_currentScore(indicator,indicator_Prev,index):
+
+    S      = indicator.loc[index]
+    S_Prev = indicator_Prev.loc[index]
     
-    return S
+    return S , S_Prev
 
 
 

@@ -6,45 +6,45 @@ import plotly.io as pio
 pio.renderers.default = "browser"
 
 
-def plot_fig01(df):
+def plot_fig01(data,ticker):
 
-
+    df=data.copy()
     # assuming df is your DataFrame
-    df["plus"]  = df[df.columns[2][0]] + df[df.columns[3][0]]
-    df["mid"]   = df[df.columns[2][0]]
-    df["minus"] = df[df.columns[2][0]] - df[df.columns[3][0]]
+    df["plus"]  = df[df.columns[2]] + df[df.columns[3]]/2
+    df["mid"]   = df[df.columns[2]]
+    df["minus"] = df[df.columns[2]] - df[df.columns[3]]/2
     
     fig = go.Figure()
     
     fig.add_trace(go.Scatter(
         x=df.index, y=df["plus"],
-        mode="lines", name=df.columns[2][0]+"+"+df.columns[3][0]
+        mode="lines", name=df.columns[2]+"+"+df.columns[3]
     ))
 
     fig.add_trace(go.Scatter(
-        x=df.index, y=df["High"]["AAPL"],
+        x=df.index, y=df["High"],
         mode="lines", name="High"
     ))
     
     fig.add_trace(go.Scatter(
         x=df.index, y=df["mid"],
-        mode="lines", name=df.columns[2][0]
+        mode="lines", name=df.columns[2]
     ))
     
     fig.add_trace(go.Scatter(
-        x=df.index, y=df["Low"]["AAPL"],
-        mode="lines", name=df.columns[1][0]
+        x=df.index, y=df["Low"],
+        mode="lines", name=df.columns[1]
     ))
     
 
     fig.add_trace(go.Scatter(
         x=df.index, y=df["minus"],
-        mode="lines", name=df.columns[2][0]+"-"+df.columns[3][0]
+        mode="lines", name=df.columns[2]+"-"+df.columns[3]
     ))
     
 
     fig.update_layout(
-        title="MID03 ± TR03",
+        title=ticker,
         xaxis_title="Date",
         yaxis_title="Value",
         template="plotly_white"
