@@ -18,8 +18,8 @@ import numpy as np
 tickerIdx = [ "AAPL"  , "MSFT"  ]   #  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
-indicators = [ "TR002" , "MID002"]  # True Range and Median Price with previous close
-indicatorScore = [ "MID002" ]
+indicators = [ "MID000"]  # True Range and Median Price with previous close
+indicatorScore = [ "MID000" ]
 start_date = "2025-01-05"
 end_date   = "2025-09-20"
 cash=10000
@@ -158,39 +158,32 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
         common_tickers = H.columns.intersection(L.columns).intersection(C.columns).intersection(O.columns)
         for t in common_tickers:
             for ind in indicators:
-                # TR0xx                
-                if ind.startswith("TR0"):
-                    m = re.search(r"\d+$", ind)
-                    if not m:
-                        raise ValueError(f"{ind} requires a numeric window, e.g., TR0010")
-                    w = int(m.group())
-                    Cprev = C[t].shift(w)
-                    Low   = L[t].rolling(w).min()
-                    High  = H[t].rolling(w).max()
-                    tr    = pd.concat([(High-Low),
-                                    (High-Cprev).abs(),
-                                    (Low-Cprev).abs()], axis=1).max(axis=1)
-                    cols[(ind, t)] = tr
-                # MID0xx                                    
-                elif ind.startswith("MID0"):
+                # MIDxxx
+                if ind.startswith("MID"):
                     m = re.search(r"\d+$", ind)
                     if not m:
                         raise ValueError(f"{ind} requires a numeric window, e.g., MID0010")
                     w = int(m.group())
-                    Cprev = C[t].shift(w)
+                    if w == 0:
+                        Low   = L[t]
+                        High  = H[t]
+                    else:
+                        Low   = L[t].rolling(w).min()
+                        High  = H[t].rolling(w).max()
+                    Cprev = C[t].shift(w+1)
+                    Open  = O[t].shift(w)                        
                     Close = C[t]
-                    Open  = O[t].shift(w-1)
-                    mid = (Open+2*Close) / 3.0
-                    cols[( ind, t)] = mid
-            cols[("High", t)] = H[t]
-            cols[("Low" , t)] = L[t]
-            for ind in indicators:
-                if ind.startswith("TR0"):
-                    TR=cols[(ind, t)]
-                if ind.startswith("MID0"):
-                    MID=cols[(ind, t)]
-            cols[("ML", t)]=MID-TR/2
-            cols[("MH", t)]=MID+TR/2
+                    Min   = pd.concat([Low, Cprev], axis=1).min(axis=1)
+                    Max   = pd.concat([High, Cprev], axis=1).max(axis=1)
+                    TR    = Max - Min
+                    Mid   = (Open+2*Close) / 3.0
+                    cols[("High", t)] = High
+                    cols[("Low" , t)] = Low
+                    cols[("Min", t)]  = Min
+                    cols[("Max", t)]  = Max
+                    cols[("TR0"+str(w).zfill(2), t)]  = TR
+                    cols[("MID0"+str(w).zfill(2), t)] = Mid
+
     
     out = pd.DataFrame(cols, index=data.index)
     out.columns = pd.MultiIndex.from_tuples(out.columns, names=["Indicator", "Ticker"])

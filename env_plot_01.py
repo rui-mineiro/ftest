@@ -18,8 +18,8 @@ def plot_fig01(df,ticker):
     
 
     fig.add_trace(go.Scatter(
-        x=df.index, y=df["MH"],
-        mode="lines", name="MH"
+        x=df.index, y=df["Max"],
+        mode="lines", name="Max"
     ))
 
     fig.add_trace(go.Scatter(
@@ -28,20 +28,20 @@ def plot_fig01(df,ticker):
     ))
 
     fig.add_trace(go.Scatter(
-        x=df.index, y=df[df.columns[3]],
-        mode="lines", name=df.columns[3]
+        x=df.index, y=df[df.columns[2]],
+        mode="lines", name=df.columns[2]
     ))
     
     fig.add_trace(go.Scatter(
         x=df.index, y=df["Low"],
-        mode="lines", name=df.columns[1]
+        mode="lines", name="Low"
     ))
     
 
 
     fig.add_trace(go.Scatter(
-        x=df.index, y=df["ML"],
-        mode="lines", name="ML"
+        x=df.index, y=df["Min"],
+        mode="lines", name="Min"
     ))
 
 

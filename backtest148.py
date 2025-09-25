@@ -16,11 +16,7 @@ indicator.columns  = indicator.columns.droplevel(0)
 indicator_Prev     = indicator.shift(1)
 
 
-# indicator_raw[("TR","TR")]
-# indicator_raw.loc[:, [("TR","TR" ,"AAPL"), ("MID","MID", "AAPL")]]
-# indicator_raw.loc[:,["TRSTD05","TRMA05"]]
-
-priceTicker    = data["Adj Close"].iloc[0]
+priceTicker    = data["Close"].iloc[0]
 unitsTicker    = pd.Series(0, index=tickerIdx, dtype=int)
 unitsTickerRef = get_unitsTickerBuy2(tickerIdx,priceTicker,cash )
 cash  = cash - unitsTicker.mul(priceTicker).sum()
