@@ -8,14 +8,12 @@ pio.renderers.default = "browser"
 
 def plot_fig00(df):
 
-    # --- Step 0: Create subplot (1 row, 1 col here, but extendable) ---
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
                         vertical_spacing=0.05 ,
                         row_heights=[0.4 , 0.6],
                         specs=[[{"secondary_y": True}],[{"secondary_y": True}]])
     
-    
-    # --- Step 1: Expand df["price"] into wide format ---
+###  Start Prices    
     price_wide = df["price"].apply(pd.Series)
     price_wide["date"] = df["date"].values   # attach the real dates
     price_df = price_wide.melt(id_vars="date", var_name="ticker", value_name="price")
@@ -31,7 +29,7 @@ def plot_fig00(df):
             row=1, col=1
         )
     
-    
+###  End Prices    
     
 #    S_wide = df["S"].apply(pd.Series)
 #    S_wide["date"] = df["date"].values   # attach the real dates
@@ -85,7 +83,7 @@ def plot_fig00(df):
 ### END Switches + Value     
     
 
-### Start Units Buy / Sell
+### Start Units x Prices  -  Buy / Sell
     units_wide = df["units"].apply(pd.Series)
     price_wide = df["price"].apply(pd.Series)
     unitsValue_wide=price_wide.mul(units_wide)
@@ -102,9 +100,9 @@ def plot_fig00(df):
             ),
             row=2, col=1
         )
-### End Units Buy / Sell
+### End Units x Prices  -  Buy / Sell
     
-    # --- Step 4: Layout ---
+#  Layout ---
     fig.update_layout(
         title="Prices by Ticker",
         xaxis_title="Date",

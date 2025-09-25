@@ -1,4 +1,3 @@
-
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
@@ -25,7 +24,7 @@ start_date = "2025-01-05"
 end_date   = "2025-09-20"
 cash=10000
 
-N = 10
+N = 4
 t = 1
 
 tickerNum = len(tickerIdx)
@@ -166,9 +165,9 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                         raise ValueError(f"{ind} requires a numeric window, e.g., TR0010")
                     w = int(m.group())
                     Cprev = C[t].shift(w)
-                    Low  = L[t].rolling(w).min()
-                    High = H[t].rolling(w).max()
-                    tr = pd.concat([(High-Low),
+                    Low   = L[t].rolling(w).min()
+                    High  = H[t].rolling(w).max()
+                    tr    = pd.concat([(High-Low),
                                     (High-Cprev).abs(),
                                     (Low-Cprev).abs()], axis=1).max(axis=1)
                     cols[(ind, t)] = tr
@@ -179,18 +178,26 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                         raise ValueError(f"{ind} requires a numeric window, e.g., MID0010")
                     w = int(m.group())
                     Cprev = C[t].shift(w)
-                    Open  = O[t].rolling(w).min()
-                    Low   = L[t].rolling(w).min()
-                    High  = H[t].rolling(w).max()
-                    mid = (Cprev+Open+Low+High) / 4.0
+                    Close = C[t]
+                    Open  = O[t].shift(w-1)
+                    mid = (Open+2*Close) / 3.0
                     cols[( ind, t)] = mid
             cols[("High", t)] = H[t]
             cols[("Low" , t)] = L[t]
-
+            for ind in indicators:
+                if ind.startswith("TR0"):
+                    TR=cols[(ind, t)]
+                if ind.startswith("MID0"):
+                    MID=cols[(ind, t)]
+            cols[("ML", t)]=MID-TR/2
+            cols[("MH", t)]=MID+TR/2
     
     out = pd.DataFrame(cols, index=data.index)
     out.columns = pd.MultiIndex.from_tuples(out.columns, names=["Indicator", "Ticker"])
     out = out.sort_index(axis=1, level=["Indicator", "Ticker"])
+    
+    
+
     return out
 
 

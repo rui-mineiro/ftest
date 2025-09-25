@@ -6,29 +6,30 @@ import plotly.io as pio
 pio.renderers.default = "browser"
 
 
-def plot_fig01(data,ticker):
+def plot_fig01(df,ticker):
 
-    df=data.copy()
-    # assuming df is your DataFrame
-    df["plus"]  = df[df.columns[2]] + df[df.columns[3]]/2
-    df["mid"]   = df[df.columns[2]]
-    df["minus"] = df[df.columns[2]] - df[df.columns[3]]/2
+#    df=data.copy()
+#    # assuming df is your DataFrame
+#    df["plus"]  = df[df.columns[2]] + df[df.columns[3]]/2
+#    df["mid"]   = df[df.columns[2]]
+#    df["minus"] = df[df.columns[2]] - df[df.columns[3]]/2
     
     fig = go.Figure()
     
+
     fig.add_trace(go.Scatter(
-        x=df.index, y=df["plus"],
-        mode="lines", name=df.columns[2]+"+"+df.columns[3]
+        x=df.index, y=df["MH"],
+        mode="lines", name="MH"
     ))
 
     fig.add_trace(go.Scatter(
         x=df.index, y=df["High"],
         mode="lines", name="High"
     ))
-    
+
     fig.add_trace(go.Scatter(
-        x=df.index, y=df["mid"],
-        mode="lines", name=df.columns[2]
+        x=df.index, y=df[df.columns[3]],
+        mode="lines", name=df.columns[3]
     ))
     
     fig.add_trace(go.Scatter(
@@ -37,11 +38,12 @@ def plot_fig01(data,ticker):
     ))
     
 
+
     fig.add_trace(go.Scatter(
-        x=df.index, y=df["minus"],
-        mode="lines", name=df.columns[2]+"-"+df.columns[3]
+        x=df.index, y=df["ML"],
+        mode="lines", name="ML"
     ))
-    
+
 
     fig.update_layout(
         title=ticker,

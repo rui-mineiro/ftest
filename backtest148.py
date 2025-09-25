@@ -107,7 +107,7 @@ print()
 print(f"Reference: {valueRef:.2f}€")
 print(f"Optimized: {value:.2f}€")
 
-plot_fig00(df)
+# plot_fig00(df)
 indicator_raw_swap=indicator_raw.copy()
 indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
 
