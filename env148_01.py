@@ -20,7 +20,7 @@ tickerIdx = [ "AAPL"  , "MSFT"  ]   #  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
 indicators = [ "MID000"]  # True Range and Median Price with previous close
 indicatorScore = [ "MID000" ]
-start_date = "2025-01-05"
+start_date = "2025-01-28"
 end_date   = "2025-09-20"
 cash=10000
 
@@ -138,27 +138,18 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
     """
 
     cols       = {}
-    
-    # ---- Preload OHLC if needed for TR/MID ----
-    need_tr = any(ind.startswith("TR0") for ind in indicators)
+
+
     need_mid = any(ind.startswith("MID0") for ind in indicators)
-    H = L = C = O = None
-
-    if need_tr or need_mid:
-        try:
-            H     = data["High"]
-            L     = data["Low"]
-            C     = data["Close"]
-            O     = data["Open"]
-        except KeyError as e:
-            raise ValueError("TR/MID need 'Open','High','Low','Close' in data columns") from e
-
-    # ---- TRUE RANGE + rolling stats ----
-    if need_tr or need_mid:
+    if need_mid:
+        H = data["High"]
+        L = data["Low"]
+        C = data["Close"]
+        O = data["Open"]
         common_tickers = H.columns.intersection(L.columns).intersection(C.columns).intersection(O.columns)
         for t in common_tickers:
             for ind in indicators:
-                # MIDxxx
+                # MIDxxx and TRxxx
                 if ind.startswith("MID"):
                     m = re.search(r"\d+$", ind)
                     if not m:
@@ -176,7 +167,7 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     Min   = pd.concat([Low, Cprev], axis=1).min(axis=1)
                     Max   = pd.concat([High, Cprev], axis=1).max(axis=1)
                     TR    = Max - Min
-                    Mid   = (Open+2*Close) / 3.0
+                    Mid   = (Cprev+Open+5*Close) / 7.0
                     cols[("High", t)] = High
                     cols[("Low" , t)] = Low
                     cols[("Min", t)]  = Min
