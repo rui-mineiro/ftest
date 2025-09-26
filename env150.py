@@ -13,13 +13,13 @@ import numpy as np
 
 # --- PARAMETERS ---
 
-tickerIdx = [ "AAPL"  , "MSFT"  ]   #  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = [ "AAPL"  ]   #  , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
-indicators = [ "MID000"]  # True Range and Median Price with previous close
-indicatorScore = [ "MID000" ]
-start_date = "2025-01-28"
-end_date   = "2025-09-20"
+indicators     = [ "MID020"]  # True Range and Median Price with previous close
+indicatorScore = [ "MID020" ]
+start_date = "2025-02-01"
+end_date   = "2025-10-05"
 cash=10000
 
 N = 4
@@ -154,29 +154,34 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                         raise ValueError(f"{ind} requires a numeric window, e.g., MID0010")
                     w = int(m.group())
                     if w == 0:
-                        Low   = L[t]
-                        High  = H[t]
+                        LowWin   = L[t]
+                        HighWin  = H[t]
                     else:
-                        Low   = L[t].rolling(w).min()
-                        High  = H[t].rolling(w).max()
-                    Cprev = C[t].shift(w+1)
-                    Open  = O[t].shift(w)                        
+                        LowWin   = L[t].rolling(w).min()
+                        HighWin  = H[t].rolling(w).max()
+                    Cprev = C[t].shift(1)
+                    Open  = O[t]
                     Close = C[t]
-                    Min   = pd.concat([Low, Cprev], axis=1).min(axis=1)
-                    Max   = pd.concat([High, Cprev], axis=1).max(axis=1)
+                    Mid   = (Open+Close)/2
+                    Min   = pd.concat([LowWin , Mid], axis=1).min(axis=1)
+                    Max   = pd.concat([HighWin, Mid], axis=1).max(axis=1)
                     TR    = Max - Min
-                    Mid   = (Cprev+Open+5*Close) / 7.0
-                    cols[("High", t)] = High
-                    cols[("Low" , t)] = Low
+
+                    cols[("Low" , t)] = L[t]
+                    cols[("High", t)] = H[t]
                     cols[("Min", t)]  = Min
                     cols[("Max", t)]  = Max
-                    cols[("TR0"+str(w).zfill(2), t)]  = TR
-                    cols[("MID0"+str(w).zfill(2), t)] = Mid
+                    cols[("TR0"+str(w).zfill(2)  , t)]  = TR
+                    cols[("MID0"+str(w).zfill(2) , t)]  = Mid
+                    cols[("DTR0"+str(w).zfill(2) , t)]  = ddt(TR)
+                    cols[("DMID0"+str(w).zfill(2), t)]  = ddt(Mid)
+                    cols[("DDTRD0"+str(w).zfill(2), t)] = ddt(ddt(TR))
+                    cols[("DDMID0"+str(w).zfill(2), t)] = ddt(ddt(Mid))
 
-    
+
     out = pd.DataFrame(cols, index=data.index)
     out.columns = pd.MultiIndex.from_tuples(out.columns, names=["Indicator", "Ticker"])
-    out = out.sort_index(axis=1, level=["Indicator", "Ticker"])
+    # out = out.sort_index(axis=1, level=["Indicator", "Ticker"])
     
     
 
@@ -185,4 +190,10 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
 
 
 
-
+def ddt(df):
+    out = df.pct_change()
+    mask_zero_to_zero = (df == 0) & (df.shift() == 0) & out.isna()
+    mask_zero_to_nonzero = (df.shift() == 0) & (df != 0) & np.isinf(out)
+    out = out.mask(mask_zero_to_zero | mask_zero_to_nonzero, 0)
+    
+    return out
