@@ -13,12 +13,12 @@ import numpy as np
 
 # --- PARAMETERS ---
 
-tickerIdx = [ "AAPL"  ]   #  , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = [ "AAPL" , "MSFT"  ]   #  , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
-indicators     = [ "MID020"]  # True Range and Median Price with previous close
-indicatorScore = [ "MID020" ]
-start_date = "2025-02-01"
+indicators     = [ "MID005"]  # True Range and Median Price with previous close
+indicatorScore = [ "MID005" ]
+start_date = "2025-01-01"
 end_date   = "2025-10-05"
 cash=10000
 
@@ -171,12 +171,13 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     cols[("High", t)] = H[t]
                     cols[("Min", t)]  = Min
                     cols[("Max", t)]  = Max
-                    cols[("TR0"+str(w).zfill(2)  , t)]  = TR
                     cols[("MID0"+str(w).zfill(2) , t)]  = Mid
-                    cols[("DTR0"+str(w).zfill(2) , t)]  = ddt(TR)
                     cols[("DMID0"+str(w).zfill(2), t)]  = ddt(Mid)
-                    cols[("DDTRD0"+str(w).zfill(2), t)] = ddt(ddt(TR))
                     cols[("DDMID0"+str(w).zfill(2), t)] = ddt(ddt(Mid))
+                    cols[("TR0"+str(w).zfill(2)  , t)]  = TR
+                    cols[("DTR0"+str(w).zfill(2) , t)]  = ddt(TR)
+                    cols[("DDTRD0"+str(w).zfill(2), t)] = ddt(ddt(TR))
+
 
 
     out = pd.DataFrame(cols, index=data.index)
@@ -195,5 +196,5 @@ def ddt(df):
     mask_zero_to_zero = (df == 0) & (df.shift() == 0) & out.isna()
     mask_zero_to_nonzero = (df.shift() == 0) & (df != 0) & np.isinf(out)
     out = out.mask(mask_zero_to_zero | mask_zero_to_nonzero, 0)
-    
+
     return out
