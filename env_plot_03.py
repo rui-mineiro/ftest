@@ -6,7 +6,7 @@ import plotly.io as pio
 pio.renderers.default = "browser"
 
 
-def plot_fig01(df,ticker):
+def plot_fig03(df,ticker):
 
 #    df=data.copy()
 #    # assuming df is your DataFrame
@@ -15,9 +15,9 @@ def plot_fig01(df,ticker):
 #    df["minus"] = df[df.columns[2]] - df[df.columns[3]]/2
     
 #    fig = go.Figure()
-    fig = make_subplots(rows=6, cols=1, shared_xaxes=True,
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
                     vertical_spacing=0.05 ,
-                    row_heights=[0.4 ,0.1 ,0.1 ,0.1 ,0.1 , 0.1  ]
+                    row_heights=[0.4 ,0.3 ,0.3  ]
                     )
         
 
@@ -49,31 +49,14 @@ def plot_fig01(df,ticker):
     ),row=1, col=1)
 
     fig.add_trace(go.Scatter(
-        x=df.index, y=df[df.columns[5]],
-        mode="lines", name=df.columns[5]
-    ),row=2, col=1)
-
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df[df.columns[6]],
-        mode="lines", name=df.columns[6]
-    ),row=3, col=1)
-
-    fig.add_trace(go.Scatter(
         x=df.index, y=df[df.columns[7]],
         mode="lines", name=df.columns[7]
-    ),row=4, col=1)
-
+    ),row=2, col=1)
 
     fig.add_trace(go.Scatter(
         x=df.index, y=df[df.columns[8]],
         mode="lines", name=df.columns[8]
-    ),row=5, col=1)
-
-
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df[df.columns[9]],
-        mode="lines", name=df.columns[9]
-    ),row=6, col=1)
+    ),row=3, col=1)
 
 
     fig.update_layout(
@@ -82,15 +65,15 @@ def plot_fig01(df,ticker):
         xaxis =dict(title="Date"),
         yaxis =dict(title="Prices"), 
         xaxis2=dict(title="Date"),
-        yaxis2=dict(title=df.columns[5]), 
+        yaxis2=dict(title=df.columns[7]), 
         xaxis3=dict(title="Date"),
-        yaxis3=dict(title=df.columns[6]), 
-        xaxis4=dict(title="Date"),
-        yaxis4=dict(title=df.columns[7]), 
-        xaxis5=dict(title="Date"),
-        yaxis5=dict(title=df.columns[8]), 
-        xaxis6=dict(title="Date"),
-        yaxis6=dict(title=df.columns[9])
+        yaxis3=dict(title=df.columns[8]), 
+#        xaxis4=dict(title="Date"),
+#        yaxis4=dict(title=df.columns[7]), 
+#        xaxis5=dict(title="Date"),
+#        yaxis5=dict(title=df.columns[8]), 
+#        xaxis6=dict(title="Date"),
+#        yaxis6=dict(title=df.columns[9])
 #        xaxis6=dict(title="Date"),
 #        yaxis6=dict(title=df.columns[8]), 
 #        xaxis7=dict(title="Date"),

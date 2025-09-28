@@ -13,13 +13,13 @@ import numpy as np
 
 # --- PARAMETERS ---
 
-tickerIdx = [ "AAPL" , "MSFT"  ]   #  , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = [ "AAPL"  ]   #  , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
-indicators     = [ "MID005"]  # True Range and Median Price with previous close
-indicatorScore = [ "MID005" ]
-start_date = "2025-01-01"
-end_date   = "2025-10-05"
+indicators     = [ "MID030"]  # True Range and Median Price with previous close
+indicatorScore = [ "MID030" ]
+start_date = "2023-11-25"
+end_date   = "2025-09-25"
 cash=10000
 
 N = 4
@@ -172,11 +172,11 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     cols[("Min", t)]  = Min
                     cols[("Max", t)]  = Max
                     cols[("MID0"+str(w).zfill(2) , t)]  = Mid
-                    cols[("DMID0"+str(w).zfill(2), t)]  = ddt(Mid)
-                    cols[("DDMID0"+str(w).zfill(2), t)] = ddt(ddt(Mid))
+                    cols[("DMID0"+str(w).zfill(2), t)]  = Mid.diff()
+                    cols[("DDMID0"+str(w).zfill(2), t)] = Mid.diff().diff()
                     cols[("TR0"+str(w).zfill(2)  , t)]  = TR
-                    cols[("DTR0"+str(w).zfill(2) , t)]  = ddt(TR)
-                    cols[("DDTRD0"+str(w).zfill(2), t)] = ddt(ddt(TR))
+                    cols[("DTR0"+str(w).zfill(2) , t)]  = TR.diff()
+                    cols[("DDTRD0"+str(w).zfill(2), t)] = TR.diff().diff()
 
 
 

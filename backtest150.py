@@ -7,6 +7,8 @@ import pulp
 from env150 import *
 from env_plot_00 import *
 from env_plot_01 import *
+from env_plot_02 import *
+from env_plot_03 import *
 
 data               = get_data(tickerIdx,start_date,end_date)
 indicator_raw      = get_indicator(data,indicators)
@@ -107,6 +109,12 @@ print(f"Optimized: {value:.2f}€")
 indicator_raw_swap=indicator_raw.copy()
 indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
 
+#for ticker in tickerIdx:
+#    plot_fig01(indicator_raw_swap[ticker],ticker)
+#
+#for ticker in tickerIdx:
+#    plot_fig02(indicator_raw_swap[ticker],ticker)
+
 for ticker in tickerIdx:
-    plot_fig01(indicator_raw_swap[ticker],ticker)
+    plot_fig03(indicator_raw_swap[ticker],ticker)
 
