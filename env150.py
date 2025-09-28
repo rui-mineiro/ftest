@@ -172,11 +172,11 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     cols[("Min", t)]  = Min
                     cols[("Max", t)]  = Max
                     cols[("MID0"+str(w).zfill(2) , t)]  = Mid
-                    cols[("DMID0"+str(w).zfill(2), t)]  = Mid.diff(w)/w
-                    cols[("DDMID0"+str(w).zfill(2), t)] = (Mid.diff(w)/w).diff(w)/w
+                    cols[("DMID0"+str(w).zfill(2), t)]  = Mid.diff()
+                    cols[("DDMID0"+str(w).zfill(2), t)] = (Mid.diff()).diff()
                     cols[("TR0"+str(w).zfill(2)  , t)]  = TR
-                    cols[("DTR0"+str(w).zfill(2) , t)]  = TR.diff(w)
-                    cols[("DDTRD0"+str(w).zfill(2), t)] = (TR.diff(w)/w).diff(w)/w
+                    cols[("DTR0"+str(w).zfill(2) , t)]  = TR.diff()
+                    cols[("DDTRD0"+str(w).zfill(2), t)] = (TR.diff()).diff()
 
 
 
