@@ -6,79 +6,41 @@ import plotly.io as pio
 pio.renderers.default = "browser"
 
 
-def plot_fig03(df,ticker):
+def plot_fig03(df, ticker):
 
-#    df=data.copy()
-#    # assuming df is your DataFrame
-#    df["plus"]  = df[df.columns[2]] + df[df.columns[3]]/2
-#    df["mid"]   = df[df.columns[2]]
-#    df["minus"] = df[df.columns[2]] - df[df.columns[3]]/2
-    
-#    fig = go.Figure()
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
-                    vertical_spacing=0.05 ,
-                    row_heights=[0.4 ,0.3 ,0.3  ]
-                    )
-        
-
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Max"],
-        mode="lines", name="Max"
-    ),row=1, col=1)
-
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["High"],
-        mode="lines", name="High"
-    ),row=1, col=1)
-    
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Low"],
-        mode="lines", name="Low"
-    ),row=1, col=1)
-    
-
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["Min"],
-        mode="lines", name="Min"
-    ),row=1, col=1)
+    # Generic variable for remaining rows
+    rowVar = [df.columns[5], df.columns[6],df.columns[7], df.columns[8]]
 
 
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df[df.columns[4]],
-        mode="lines", name=df.columns[4]
-    ),row=1, col=1)
-
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df[df.columns[7]],
-        mode="lines", name=df.columns[7]
-    ),row=2, col=1)
-
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df[df.columns[8]],
-        mode="lines", name=df.columns[8]
-    ),row=3, col=1)
-
-
-    fig.update_layout(
-        title=ticker,
-        template="plotly_white",
-        xaxis =dict(title="Date"),
-        yaxis =dict(title="Prices"), 
-        xaxis2=dict(title="Date"),
-        yaxis2=dict(title=df.columns[7]), 
-        xaxis3=dict(title="Date"),
-        yaxis3=dict(title=df.columns[8]), 
-#        xaxis4=dict(title="Date"),
-#        yaxis4=dict(title=df.columns[7]), 
-#        xaxis5=dict(title="Date"),
-#        yaxis5=dict(title=df.columns[8]), 
-#        xaxis6=dict(title="Date"),
-#        yaxis6=dict(title=df.columns[9])
-#        xaxis6=dict(title="Date"),
-#        yaxis6=dict(title=df.columns[8]), 
-#        xaxis7=dict(title="Date"),
-#        yaxis7=dict(title=df.columns[9]),
+    fig = make_subplots(
+        rows=len(rowVar)+1, cols=1, shared_xaxes=True
     )
-    
 
+    # Row 1 traces
+    for col in ["Max", "High", "Low", "Min", df.columns[4]]:
+        fig.add_trace(
+            go.Scatter(x=df.index, y=df[col], mode="lines", name=str(col)),
+            row=1, col=1
+        )
+
+
+    # Add traces for rows 2..n
+    for i, col in enumerate(rowVar, start=2):
+        fig.add_trace(
+            go.Scatter(x=df.index, y=df[col], mode="lines", name=str(col)),
+            row=i, col=1
+        )
+
+    # Build axis layout
+    layout_kwargs = {
+        "title": ticker,
+        "template": "plotly_white",
+        "xaxis": dict(title="Date"),
+        "yaxis": dict(title="Prices"),
+    }
+    for i, col in enumerate(rowVar, start=2):
+        layout_kwargs[f"xaxis{i}"] = dict(title="Date")
+        layout_kwargs[f"yaxis{i}"] = dict(title=col)
+
+    fig.update_layout(**layout_kwargs)
     fig.show()
