@@ -9,17 +9,18 @@ import pulp
 import re
 import pandas as pd
 import numpy as np
+from datetime import date
 
 
 # --- PARAMETERS ---
 
-tickerIdx = [ "AAPL"  ]   #  , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = [ "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
-indicators     = [ "MID030"]  # True Range and Median Price with previous close
-indicatorScore = [ "MID030" ]
+indicators     = [ "TR005" ]  # True Range and Median Price with previous close
+indicatorScore = [ "TR005" ]
 start_date = "2023-11-25"
-end_date   = "2025-09-25"
+end_date   = date.today().strftime("%Y-%m-%d")
 cash=10000
 
 N = 4
@@ -138,7 +139,7 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
     cols       = {}
 
 
-    need_mid = any(ind.startswith("MID0") for ind in indicators)
+    need_mid = any(ind.startswith("TR0") for ind in indicators)
     if need_mid:
         H = data["High"]
         L = data["Low"]
@@ -148,34 +149,34 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
         for t in common_tickers:
             for ind in indicators:
                 # MIDxxx and TRxxx
-                if ind.startswith("MID"):
+                if ind.startswith("TR0"):
                     m = re.search(r"\d+$", ind)
                     if not m:
                         raise ValueError(f"{ind} requires a numeric window, e.g., MID0010")
                     w = int(m.group())
                     if w == 0:
-                        LowWin   = L[t]
-                        HighWin  = H[t]
+                        Min   = L[t]
+                        Max  = H[t]
                     else:
-                        LowWin   = L[t].rolling(w).min()
-                        HighWin  = H[t].rolling(w).max()
+                        Min   = L[t].rolling(w).min()
+                        Max  = H[t].rolling(w).max()
                     Cprev = C[t].shift(1)
                     Open  = O[t]
                     Close = C[t]
                     Mid   = (Open+Close)/2
-                    Min   = pd.concat([LowWin , Mid], axis=1).min(axis=1)
-                    Max   = pd.concat([HighWin, Mid], axis=1).max(axis=1)
                     TR    = Max - Min
-
                     cols[("Low" , t)] = L[t]
                     cols[("High", t)] = H[t]
                     cols[("Min", t)]  = Min
                     cols[("Max", t)]  = Max
-                    cols[("MID0"+str(w).zfill(2) , t)]  = Mid
-                    cols[("DMID0"+str(w).zfill(2), t)]  = Mid.diff()
+                    cols[("MID"                  , t)]  = Mid
+                    cols[("DMID"                 , t)]  = Mid.diff()      # 5
                     cols[("TR0"+str(w).zfill(2)  , t)]  = TR
                     cols[("UTR0"+str(w).zfill(2) , t)]  = Max-Mid
+                    cols[("LTR0"+str(w).zfill(2) , t)]  = Mid-Min
                     cols[("MMR0"+str(w).zfill(2), t)]   = (Max-Mid)/(Mid-Min)
+                    cols[("DMMR0"+str(w).zfill(2), t)]  = ((Max-Mid)/(Mid-Min)).diff()
+
 
 
 

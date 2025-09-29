@@ -6,10 +6,11 @@ import plotly.io as pio
 pio.renderers.default = "browser"
 
 
-def plot_fig03(df, ticker):
+def plot_fig03(df, idx , ticker):
 
     # Generic variable for remaining rows
-    rowVar = [df.columns[5], df.columns[6],df.columns[7], df.columns[8]]
+    rowVar = [df.columns[i] for i in idx]
+    # rowVar = idx
 
 
     fig = make_subplots(

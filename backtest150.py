@@ -115,6 +115,37 @@ indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
 #for ticker in tickerIdx:
 #    plot_fig02(indicator_raw_swap[ticker],ticker)
 
+
+
+# for ticker in tickerIdx:
+#     plot_fig03(indicator_raw_swap[ticker], indicators ,ticker)
+
+idx=[ 5 , 6 , 7 , 8 ,9]
+indicator_raw      = get_indicator(data,[ "TR003" ])
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
 for ticker in tickerIdx:
-    plot_fig03(indicator_raw_swap[ticker],ticker)
+    plot_fig03(indicator_raw_swap[ticker], idx ,ticker)
+
+indicator_raw      = get_indicator(data,[ "TR005" ])
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
+for ticker in tickerIdx:
+    plot_fig03(indicator_raw_swap[ticker], idx ,ticker)
+
+indicator_raw      = get_indicator(data,[ "TR010" ])
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
+for ticker in tickerIdx:
+    plot_fig03(indicator_raw_swap[ticker], idx ,ticker)
+
+
+indicator_raw      = get_indicator(data,[ "TR015" ])
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
+for ticker in tickerIdx:
+    plot_fig03(indicator_raw_swap[ticker], idx ,ticker)
+
+
+
 
