@@ -188,12 +188,3 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
     return out
 
 
-
-
-def ddt(df):
-    out = df.pct_change()
-    mask_zero_to_zero = (df == 0) & (df.shift() == 0) & out.isna()
-    mask_zero_to_nonzero = (df.shift() == 0) & (df != 0) & np.isinf(out)
-    out = out.mask(mask_zero_to_zero | mask_zero_to_nonzero, 0)
-
-    return out
