@@ -10,17 +10,23 @@ import re
 import pandas as pd
 import numpy as np
 from datetime import date
+from dateutil.relativedelta import relativedelta
 
 
 # --- PARAMETERS ---
 
-tickerIdx = [ "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx = [ "VETH.DE" ] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 # indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
 # indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
 indicators     = [ "TR005" ]  # True Range and Median Price with previous close
 indicatorScore = [ "TR005" ]
-start_date = "2023-11-25"
-end_date   = date.today().strftime("%Y-%m-%d")
+
+end_date = date.today()
+start_date = end_date - relativedelta(months=12)
+
+end_date_str = end_date.strftime("%Y-%m-%d")
+start_date_str = start_date.strftime("%Y-%m-%d")
+
 cash=10000
 
 N = 4
@@ -164,18 +170,23 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     Open  = O[t]
                     Close = C[t]
                     Mid   = (Open+Close)/2
+                    DMid  = Mid.rolling(w).mean().diff()
                     TR    = Max - Min
                     cols[("Low" , t)] = L[t]
                     cols[("High", t)] = H[t]
                     cols[("Min", t)]  = Min
                     cols[("Max", t)]  = Max
-                    cols[("MID"                  , t)]  = Mid
-                    cols[("DMID"                 , t)]  = Mid.diff()      # 5
-                    cols[("TR0"+str(w).zfill(2)  , t)]  = TR
-                    cols[("UTR0"+str(w).zfill(2) , t)]  = Max-Mid
-                    cols[("LTR0"+str(w).zfill(2) , t)]  = Mid-Min
-                    cols[("MMR0"+str(w).zfill(2), t)]   = (Max-Mid)/(Mid-Min)
-                    cols[("DMMR0"+str(w).zfill(2), t)]  = ((Max-Mid)/(Mid-Min)).diff()
+                    cols[("MID"                   , t)]  = Mid
+                    cols[("#DMID0"+str(w).zfill(2), t)]  = DMid      # 5
+                    cols[("TR0"+str(w).zfill(2)   , t)]  = TR        # 6
+                    cols[("RTR0"+str(w).zfill(2)  , t)]  = TR/Mid    # 7
+                    cols[("UTR0"+str(w).zfill(2)  , t)]  = Max-Mid   # 8
+                    cols[("#RUTR0"+str(w).zfill(2), t)]  = (Max-Mid)/TR            # 9
+                    cols[("#DRUTR0"+str(w).zfill(2), t)] = ((Max-Mid)/TR).diff()   # 10
+                    cols[("LTR0"+str(w).zfill(2)  , t)]  = Mid-Min                 # 11
+                    cols[("RLTR0"+str(w).zfill(2) , t)]  = (Mid-Min)/TR            # 12
+                    cols[("#MMR0"+str(w).zfill(2) , t)]  = (Max-Mid)/(Mid-Min)     # 13
+                    cols[("DMMR0"+str(w).zfill(2) , t)]  = ((Max-Mid)/(Mid-Min)).diff()  # 14
 
 
 
