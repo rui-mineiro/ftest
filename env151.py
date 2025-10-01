@@ -44,12 +44,9 @@ unitsTickerH   = pd.Series()  # Tickers High >   S_K
 unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
 
 def get_ScoreLimits(df):
-
+    
     for t in df.columns.get_level_values("Ticker").unique():
-
-        # base column (here 'Low', but works with any indicator)
         base = df[("#RUTR005", t)]
-        
         # create new columns under same ticker
         df[("S_H", t)] = (base > 0.6).astype(int)
         df[("S_L", t)] = (base < 0.4).astype(int)
