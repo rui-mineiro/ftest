@@ -43,15 +43,12 @@ unitsTicker    = pd.Series()  # Tickers Units
 unitsTickerH   = pd.Series()  # Tickers High >   S_K
 unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
 
+
 def get_ScoreLimits(df):
-    
     for t in df.columns.get_level_values("Ticker").unique():
         base = df[("#RUTR005", t)]
-        # create new columns under same ticker
         df[("S_H", t)] = (base > 0.6).astype(int)
         df[("S_L", t)] = (base < 0.4).astype(int)
-    
-    # keep MultiIndex order clean
     df = df.sort_index(axis=1)
 
     SL_H_Prev , SL_S_Prev , SL_B_Prev = S_H.shift(1) , S_S.shift(1) , S_B.shift(1)
