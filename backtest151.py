@@ -4,16 +4,17 @@ import numpy as np
 import datetime
 import itertools
 import pulp
-from env149 import *
+from env150 import *
 from env_plot_00 import *
 from env_plot_01 import *
+from env_plot_02 import *
 from env_plot_03 import *
 
 data               = get_data(tickerIdx,start_date,end_date)
 indicator_raw      = get_indicator(data,indicators)
 SL_H , SL_S , SL_B , SL_H_Prev , SL_S_Prev , SL_B_Prev = get_ScoreLimits(data)   # Score Limit Hold , Sell and Buy
-indicator          = indicator_raw[indicatorScore]
-indicator.columns  = indicator.columns.droplevel(0)
+indicator          = indicator_raw
+indicator.columns  = indicator.columns.droplevel(1)
 indicator_Prev     = indicator.shift(1)
 
 
@@ -25,7 +26,7 @@ cash  = cash - unitsTicker.mul(priceTicker).sum()
 
 for _ , index in enumerate(data.index, start=1):
 
-    pTicker         = data["Adj Close"].loc[index]
+    pTicker         = indicator["MID"].loc[index]
     date            = index
     S , S_Prev      = get_currentScore(indicator,indicator_Prev,index)
     S_H , S_S , S_B = SL_H.loc[index] , SL_S.loc[index] , SL_B.loc[index]
@@ -108,7 +109,52 @@ print(f"Optimized: {value:.2f}€")
 indicator_raw_swap=indicator_raw.copy()
 indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
 
-idx=[ 5  ]
+#for ticker in tickerIdx:
+#    plot_fig01(indicator_raw_swap[ticker],ticker)
+#
+#for ticker in tickerIdx:
+#    plot_fig02(indicator_raw_swap[ticker],ticker)
+
+
+
+# for ticker in tickerIdx:
+#     plot_fig03(indicator_raw_swap[ticker], indicators ,ticker)
+
+idx=[ 5,  6,7,8]
+
+
+indicator_raw      = get_indicator(data,[ "TR002" ])
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
 for ticker in tickerIdx:
-    plot_fig03(indicator_raw_swap[ticker], idx,ticker)
+    plot_fig03(indicator_raw_swap[ticker], idx ,ticker)
+
+
+indicator_raw      = get_indicator(data,[ "TR003" ])
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
+for ticker in tickerIdx:
+    plot_fig03(indicator_raw_swap[ticker], idx ,ticker)
+
+indicator_raw      = get_indicator(data,[ "TR005" ])
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
+for ticker in tickerIdx:
+    plot_fig03(indicator_raw_swap[ticker], idx ,ticker)
+
+indicator_raw      = get_indicator(data,[ "TR010" ])
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
+for ticker in tickerIdx:
+    plot_fig03(indicator_raw_swap[ticker], idx ,ticker)
+
+
+indicator_raw      = get_indicator(data,[ "TR015" ])
+indicator_raw_swap=indicator_raw.copy()
+indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
+for ticker in tickerIdx:
+    plot_fig03(indicator_raw_swap[ticker], idx ,ticker)
+
+
+
 

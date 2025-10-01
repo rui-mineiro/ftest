@@ -4,14 +4,14 @@ import numpy as np
 import datetime
 import itertools
 import pulp
-from env149 import *
+from env151 import *
 from env_plot_00 import *
 from env_plot_01 import *
 from env_plot_03 import *
 
 data               = get_data(tickerIdx,start_date,end_date)
-indicator_raw      = get_indicator(data,indicators)
-SL_H , SL_S , SL_B , SL_H_Prev , SL_S_Prev , SL_B_Prev = get_ScoreLimits(data)   # Score Limit Hold , Sell and Buy
+indicator          = get_indicator(data,indicators)
+SL_H , SL_S , SL_B , SL_H_Prev , SL_S_Prev , SL_B_Prev = get_ScoreLimits(indicator)   # Score Limit Hold , Sell and Buy
 indicator          = indicator_raw[indicatorScore]
 indicator.columns  = indicator.columns.droplevel(0)
 indicator_Prev     = indicator.shift(1)
@@ -36,7 +36,7 @@ for _ , index in enumerate(data.index, start=1):
 
     if t > 0 :
         t-=1
-        # if Score of all existing tickers is <S_H then sell all and hold
+        # if Score of all existing tickers is <S_S then sell all and hold
         SHold  = S[(S_S_Prev > S_Prev ) & (S_S < S )]
         nSHold = S[~(S_S_Prev > S_Prev ) & (S_S < S )]
         if nSHold.empty and unitsTicker.sum()>0:
@@ -108,7 +108,7 @@ print(f"Optimized: {value:.2f}€")
 indicator_raw_swap=indicator_raw.copy()
 indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
 
-idx=[ 5  ]
+idx=[ 5 , 6,7,8]
 for ticker in tickerIdx:
     plot_fig03(indicator_raw_swap[ticker], idx,ticker)
 

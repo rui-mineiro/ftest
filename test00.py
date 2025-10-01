@@ -1,195 +1,135 @@
-# pip install pandas numpy yfinance torch scikit-learn
-import math
-import numpy as np
-import pandas as pd
-import yfinance as yf
-import torch
-import torch.nn as nn
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report
+# reinforce_backtest_sma.py
+import math, numpy as np, pandas as pd, torch, torch.nn as nn, yfinance as yf
 
-# --------------------
-# 1) Data
-# --------------------
-ticker = "AAPL"
-start  = "2015-01-01"
-end    = None  # today
-
-df = yf.download(ticker, start=start, end=end, auto_adjust=True)  # OHLCV
-df = df.rename(columns=str.title).dropna()
-
-# Features: returns, rolling stats, RSI
-def rsi(series: pd.Series, window=14):
-    delta = series.diff()
-    up = delta.clip(lower=0)
-    dn = -delta.clip(upper=0)
-    rs = up.rolling(window).mean() / dn.rolling(window).mean()
-    return 100 - 100 / (1 + rs)
-
-df["ret1"]   = df["Close"].pct_change()
-df["logret"] = np.log1p(df["ret1"])
-df["vol10"]  = df["ret1"].rolling(10).std()
-df["vol20"]  = df["ret1"].rolling(20).std()
-df["mom5"]   = df["Close"].pct_change(5)
-df["mom10"]  = df["Close"].pct_change(10)
-df["rsi14"]  = rsi(df["Close"], 14) / 100.0
-df["hl_spread"] = (df["High"] - df["Low"]) / df["Close"]
-df["oc_gap"]    = (df["Open"] - df["Close"].shift(1)) / df["Close"].shift(1)
-
-# Label: next-day return sign (binary). Also store numeric next-day return for PnL.
-df["y_ret_next"] = df["ret1"].shift(-1)
-df["y_class"] = (df["y_ret_next"] > 0).astype(int)
-
-feat_cols = ["logret","vol10","vol20","mom5","mom10","rsi14","hl_spread","oc_gap"]
-df = df.dropna(subset=feat_cols + ["y_class","y_ret_next"]).copy()
-
-X = df[feat_cols].values.astype(np.float32)
-y = df["y_class"].values.astype(np.int64)
-y_next_ret = df["y_ret_next"].values.astype(np.float32)
-dates = df.index
-
-# Train/val/test split by time
-n = len(df)
-i_train = int(n*0.7)
-i_val   = int(n*0.85)
-
-X_train, y_train = X[:i_train], y[:i_train]
-X_val,   y_val   = X[i_train:i_val], y[i_train:i_val]
-X_test,  y_test  = X[i_val:], y[i_val:]
-ret_test        = y_next_ret[i_val:]
-dates_test      = dates[i_val:]
-
-# Scale features using only train fit
-scaler = StandardScaler().fit(X_train)
-X_train = scaler.transform(X_train).astype(np.float32)
-X_val   = scaler.transform(X_val).astype(np.float32)
-X_test  = scaler.transform(X_test).astype(np.float32)
-
-# --------------------
-# 2) PyTorch model
-# --------------------
 torch.manual_seed(0)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = "cpu"
 
-class MLP(nn.Module):
-    def __init__(self, in_dim):
+# ------------------ data ------------------
+ticker = "AAPL"
+px = yf.download(ticker, start="2024-01-01", end="2025-01-01", progress=False, auto_adjust=False)["Adj Close"].dropna()
+ret = px.pct_change().fillna(0.0)
+split = int(len(px) * 0.7)
+idx_tr, idx_te = px.index[:split], px.index[split:]
+
+# ------------------ backtest ------------------
+def sma_metrics(px, n_fast, n_slow, thr, idx, tcost=1e-3):
+    # 1) Price as Series
+    if isinstance(px, pd.DataFrame):
+        px = px.squeeze("columns")  # single column -> Series
+
+    # 2) Signals as Series
+    sf = px.rolling(n_fast).mean()
+    ss = px.rolling(n_slow).mean()
+    spread = (sf - ss) / ss
+    sig = spread.reindex(idx)
+    if isinstance(sig, pd.DataFrame):
+        sig = sig.squeeze("columns")
+
+    # 3) Position as Series
+    pos = (sig.gt(thr).astype(float) - sig.lt(-thr).astype(float))
+    pos = pos.shift(1).fillna(0.0)
+
+    # 4) Returns as Series
+    r = px.pct_change().reindex(idx).fillna(0.0)
+
+    # 5) PnL as Series (drop NaNs/Infs)
+    trades = pos.diff().abs().fillna(pos.abs())
+    pnl = pos.mul(r, fill_value=0) - tcost * trades
+    pnl = pnl.replace([np.inf, -np.inf], np.nan).dropna()
+
+    sharpe_val = pnl.mean() / (pnl.std(ddof=0) + 1e-3)
+    cumret_val = (1.0 + pnl).prod() - 1.0
+    turn_val   = trades.mean()
+
+    return float(sharpe_val), float(cumret_val), float(turn_val)
+
+
+# map raw [-3,3] -> parameter ranges
+def to_unit(z):  # [-3,3] -> [0,1]
+    return float(np.clip((z + 3.0) / 6.0, 0.0, 1.0))
+
+def map_param(z, lo, hi, as_int=False):
+    u = to_unit(z)
+    x = lo + u * (hi - lo)
+    return int(round(x)) if as_int else float(x)
+
+# reward on TRAIN
+def reward_from_x(x_vec: np.ndarray) -> float:
+    n_fast = map_param(x_vec[0], 5, 60, as_int=True)
+    n_slow = map_param(x_vec[1], 20, 250, as_int=True)
+    thr    = map_param(x_vec[2], 0.0, 0.02, as_int=False)
+    sh, _, _ = sma_metrics(px, n_fast, n_slow, thr, idx_tr)
+    return sh
+
+# ------------------ policy ------------------
+class Policy(nn.Module):
+    def __init__(self, d=3, hidden=64):
         super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(in_dim, 32),
-            nn.ReLU(),
-            nn.Linear(32, 16),
-            nn.ReLU(),
-            nn.Linear(16, 2)  # logits for 2 classes
-        )
-    def forward(self, x):
-        return self.net(x)
+        self.net = nn.Sequential(nn.Linear(4, hidden), nn.ReLU(),
+                                 nn.Linear(hidden, hidden), nn.ReLU())
+        self.mu = nn.Linear(hidden, d)
+        self.log_std = nn.Linear(hidden, d)
+    def forward(self, batch: int):
+        z = torch.randn(batch, 4, device=device)
+        h = self.net(z)
+        mu = self.mu(h)
+        logstd = torch.clamp(self.log_std(h), -4, 1)
+        std = torch.exp(logstd)
+        dist = torch.distributions.Normal(mu, std)
+        x = dist.rsample()                   # raw in R^d (later mapped to params)
+        logp = dist.log_prob(x).sum(-1)
+        ent = dist.entropy().sum(-1)
+        return x, logp, ent
 
-model = MLP(in_dim=X_train.shape[1]).to(device)
-opt = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-loss_fn = nn.CrossEntropyLoss()
+# vectorized reward wrapper
+def f_batch(X: torch.Tensor) -> torch.Tensor:
+    out = []
+    for row in X.detach().cpu().numpy():
+        out.append(reward_from_x(row))
+    return torch.tensor(out, dtype=torch.float32, device=device)
 
-def to_tensor(a, dtype=torch.float32):
-    return torch.from_numpy(a).to(device=device, dtype=dtype)
+# ------------------ train (REINFORCE) ------------------
+def train_reinforce(steps=50, batch=51, lr=3e-3, ent_coef=1e-3, clip_grad=1.0):
+    pi = Policy(d=3).to(device)
+    opt = torch.optim.Adam(pi.parameters(), lr=lr)
+    baseline = None
+    alpha = 0.05
+    best_r, best_x = -math.inf, None
 
-Xt = to_tensor(X_train)
-yt = torch.from_numpy(y_train).to(device)
-Xv = to_tensor(X_val)
-yv = torch.from_numpy(y_val).to(device)
+    for t in range(1, steps + 1):
+        X, logp, ent = pi(batch)
+        r = f_batch(X)                           # Sharpes on train
+        with torch.no_grad():
+            baseline = r.mean() if baseline is None else (1 - alpha) * baseline + alpha * r.mean()
+        adv = (r - baseline).detach()
+        loss = -(adv * logp).mean() - ent_coef * ent.mean()
 
-# Train
-epochs = 30
-batch = 128
-for ep in range(epochs):
-    model.train()
-    perm = torch.randperm(len(Xt))
-    for i in range(0, len(Xt), batch):
-        idx = perm[i:i+batch]
-        xb = Xt[idx]
-        yb = yt[idx]
-        opt.zero_grad()
-        logits = model(xb)
-        loss = loss_fn(logits, yb)
-        loss.backward()
+        opt.zero_grad(); loss.backward()
+        if clip_grad is not None:
+            nn.utils.clip_grad_norm_(pi.parameters(), clip_grad)
         opt.step()
 
-# --------------------
-# 3) Validation accuracy
-# --------------------
-model.eval()
-with torch.no_grad():
-    val_logits = model(Xv)
-    val_pred = val_logits.argmax(1).cpu().numpy()
-print("Validation report:")
-print(classification_report(y_val, val_pred, digits=3))
+        with torch.no_grad():
+            i = torch.argmax(r)
+            if r[i] > best_r:
+                best_r, best_x = float(r[i]), X[i].clone()
 
-# --------------------
-# 4) Backtest on test set
-# --------------------
-# Strategy: go long if P(long)>0.55, short if P(long)<0.45, else flat.
-# Transaction cost: 10 bps per trade on notional of position change.
-with torch.no_grad():
-    probs = torch.softmax(model(to_tensor(X_test)), dim=1)[:,1].cpu().numpy()
+        if t % 250 == 0:
+            print(f"iter {t:4d}  best train Sharpe ~ {best_r:.4f}")
 
-long_thr  = 0.55
-short_thr = 0.45
-pos = np.zeros_like(probs, dtype=np.float32)
-pos[probs >= long_thr]  = 1.0
-pos[probs <= short_thr] = -1.0
-# pos in {-1,0,1}; daily returns are next-day returns relative to signal day.
+    return best_x.detach().cpu().numpy(), best_r
 
-# Shift position to avoid look-ahead: use today's signal for tomorrow's return
-pos_shifted = np.roll(pos, 1)
-pos_shifted[0] = 0.0
+best_x, best_train_sh = train_reinforce()
 
-# Costs on position changes
-turnover = np.abs(np.diff(np.r_[0.0, pos_shifted]))  # position change magnitude
-tcost_bps = 10  # 10 basis points
-costs = turnover * (tcost_bps / 1e4)
+# decode best params
+n_fast = map_param(best_x[0], 5, 60, as_int=True)
+n_slow = map_param(best_x[1], 20, 250, as_int=True)
+thr    = map_param(best_x[2], 0.0, 0.02, as_int=False)
 
-# Strategy gross return
-strat_gross = pos_shifted * ret_test
-# Net return after costs (cost applied on the day of the change)
-strat_net = strat_gross - costs
+tr_sh, tr_cr, tr_to = sma_metrics(px, n_fast, n_slow, thr, idx_tr)
+te_sh, te_cr, te_to = sma_metrics(px, n_fast, n_slow, thr, idx_te)
 
-# Equity curve
-equity = (1.0 + strat_net).cumprod()
-
-# Metrics
-def sharpe(returns, periods_per_year=252):
-    mu = np.mean(returns)
-    sd = np.std(returns, ddof=1)
-    if sd == 0:
-        return 0.0
-    return (mu * periods_per_year) / (sd * math.sqrt(periods_per_year))
-
-def max_drawdown(curve):
-    peak = np.maximum.accumulate(curve)
-    dd = (curve / peak) - 1.0
-    return dd.min()
-
-def cagr(curve, periods_per_year=252):
-    n = len(curve)
-    if n == 0:
-        return 0.0
-    years = n / periods_per_year
-    return curve[-1]**(1/years) - 1
-
-sr   = sharpe(strat_net)
-mdd  = max_drawdown(equity)
-cg   = cagr(equity)
-
-print("\nBacktest period:", dates_test[0].date(), "to", dates_test[-1].date())
-print(f"Test samples: {len(strat_net)} | Long %: {np.mean(pos==1):.2%} | Short %: {np.mean(pos==-1):.2%}")
-print(f"Sharpe: {sr:.2f} | MaxDD: {mdd:.2%} | CAGR: {cg:.2%} | Final equity: {equity[-1]:.3f}")
-
-# Optional: save CSV with results
-out = pd.DataFrame({
-    "Date": dates_test,
-    "prob_long": probs,
-    "position": pos_shifted,
-    "ret_next": ret_test,
-    "strat_net": strat_net,
-    "equity": equity
-}).set_index("Date")
-out.to_csv("pytorch_backtest_results.csv")
-print("Saved: pytorch_backtest_results.csv")
+print("\nBest parameters (decoded):")
+print({"n_fast": n_fast, "n_slow": n_slow, "thr": round(thr, 5)})
+print(f"Train: Sharpe {tr_sh:.3f}  CumRet {tr_cr:.3f}  Turnover {tr_to:.4f}")
+print(f"Test : Sharpe {te_sh:.3f}  CumRet {te_cr:.3f}  Turnover {te_to:.4f}")

@@ -120,7 +120,7 @@ indicator_raw_swap.columns=indicator_raw.columns.swaplevel(0,1)
 # for ticker in tickerIdx:
 #     plot_fig03(indicator_raw_swap[ticker], indicators ,ticker)
 
-idx=[ 5,  9, 13]
+idx=[ 5,  6,7,8]
 
 
 indicator_raw      = get_indicator(data,[ "TR002" ])
