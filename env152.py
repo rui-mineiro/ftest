@@ -15,7 +15,7 @@ from dateutil.relativedelta import relativedelta
 
 # --- PARAMETERS ---
 
-tickerIdx   = [ "VETH.DE" ] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx   = [ "VETH.DE" , "DAVV.DE"] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 indicators  = [ "TR005" ]  # True Range Period
 
 
@@ -44,19 +44,36 @@ unitsTickerH   = pd.Series()  # Tickers High >   S_K
 unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
 
 
-def get_ScoreLimits(df):
-    for t in df.columns.get_level_values("Ticker").unique():
-        base = df[("#RUTR005", t)]
-        df[("S_H", t)] = (base > 0.6).astype(int)
-        df[("S_L", t)] = (base < 0.4).astype(int)
-    df = df.sort_index(axis=1)
+def rnd_SIG(df):
+    
+    tickers = df.columns.get_level_values("Ticker").unique()
+    choices = [-1, 0, 1]
+    probs   = [0.1, 0.8, 0.1]
 
-    S_H , S_S , S_B = df[("S_H", tickerIdx[0])] , df[("S_H", tickerIdx[0])] , df[("S_H", tickerIdx[0])] 
+    S = pd.DataFrame(
+        np.random.choice(choices, size=(len(df), len(tickers) ), p=probs),
+        index=df.index,
+        columns=tickers
+        )
 
-    SL_H_Prev , SL_S_Prev , SL_B_Prev = S_H.shift(1) , S_S.shift(1) , S_B.shift(1)
+
+    return S
 
 
-    return S_H , S_S , S_B , SL_H_Prev , SL_S_Prev , SL_B_Prev
+def rnd_TickerPrice(df):
+    
+    # df: MultiIndex columns = ['Indicator','Ticker']
+    low  = df.xs('Low',  level='Indicator', axis=1)
+    high = df.xs('High', level='Indicator', axis=1)
+    
+    rng = np.random.default_rng()              # or np.random.default_rng(42) for reproducible results
+    u = rng.random(low.shape)                  # uniform [0,1) per cell
+    
+    pTicker = low + (high - low) * u              # random price within [Low, High]
+
+    return pTicker
+
+
 
 def get_currentScore(indicator,indicator_Prev,index):
 
