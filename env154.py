@@ -17,7 +17,7 @@ from dateutil.relativedelta import relativedelta
 # --- PARAMETERS ---
 
 tickerIdx   = [ "VETH.DE" , "DAVV.DE" , "MSFT" , "NVDA" , "INTC"] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
-indicators  = [ "TR005" ]  # True Range Period
+indicators  = [ "TR003" ]  # True Range Period
 
 
 end_date = date.today()
@@ -25,11 +25,6 @@ start_date = end_date - relativedelta(months=12)
 
 end_date_str = end_date.strftime("%Y-%m-%d")
 start_date_str = start_date.strftime("%Y-%m-%d")
-
-cash=10000
-
-N = 3
-t = 1
 
 tickerNum = len(tickerIdx)
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
@@ -58,8 +53,8 @@ def get_SIG(df):
 #         )
 
     S = pd.DataFrame( 0,index=df.index, columns=tickers )
-    S[df["#RLTR005"]<0.6]=-1
-    S[df["#RLTR005"]>0.9]= 1
+    S[df["#RLTR003"]<0.6]=-1
+    S[df["#RLTR003"]>0.9]= 1
 
     return S
 
@@ -67,8 +62,8 @@ def get_SIG(df):
 def get_TickerPrice(df):
     
     # df: MultiIndex columns = ['Indicator','Ticker']
-    low  = df.xs('Low',  level='Indicator', axis=1)
-    high = df.xs('High', level='Indicator', axis=1)
+    low  = df.xs('Low',  level='Price', axis=1)
+    high = df.xs('High', level='Price', axis=1)
     
     rng = np.random.default_rng()              # or np.random.default_rng(42) for reproducible results
     u = rng.random(low.shape)                  # uniform [0,1) per cell
@@ -228,4 +223,77 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
 
     return out
 
+
+
+
+def backtest(data,indicator,SIG,tickerIdx,cash=10000,N=3):
+
+                   
+
+    TickerPrice    = get_TickerPrice(data)
+    
+    pTicker        = TickerPrice.iloc[0]
+    unitsTicker    = pd.Series(1, index=tickerIdx, dtype=int)
+    unitsTickerRef = get_unitsTickerBuy(tickerIdx,pTicker,cash)
+    cash           = cash - unitsTicker.mul(pTicker).sum()
+    t = 1
+    
+    for _ , index in enumerate(data.index, start=1):
+    
+        date            = index
+        pTicker         = TickerPrice.loc[index]
+        S               = SIG.loc[index]
+        
+        moved = ''
+    
+        if t > 0 :
+            t-=1
+            SBuy=(S[S==1])
+            if not SBuy.empty:
+                unitsTickerBuy = unitsTicker[unitsTicker.index.intersection(SBuy.index)]
+                unitsTickerBuy = get_unitsTickerBuy(unitsTickerBuy.index,pTicker[unitsTickerBuy.index],cash)
+                unitsTickerBuy = unitsTickerBuy[unitsTickerBuy>0]
+                if not unitsTickerBuy.empty:
+                    tickersH=unitsTickerBuy.index
+                    unitsTickerH    = unitsTickerBuy
+                    for ticker in tickersH:     
+                        moved        = moved+"+"+str(unitsTickerH[ticker])+"#"+ticker
+                    cash = cash - unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
+                    unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
+                    t=N
+            SSell=(S[S==-1])
+            if not SSell.empty:
+                unitsTickerSell = unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SSell.index)].astype(int)
+                unitsTickerSell = unitsTickerSell[unitsTickerSell>0]
+                if not unitsTickerSell.empty:
+                    unitsTickerL    = unitsTickerSell
+                    tickersL=unitsTickerL.index
+                    for ticker in tickersL:     
+                        moved        = moved+"-"+str(unitsTickerL[ticker])+"#"+ticker
+                    cash = cash  + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
+                    unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
+                    t=N
+        else:
+            t=N
+    
+        value = unitsTicker.mul(pTicker).sum() + cash
+    
+        if not moved:
+            movedStr=None
+        else:
+            movedStr=moved
+    
+        records.append({
+            "date":  date,       
+            "price": pTicker.copy(),    
+            "units": unitsTicker.copy(),
+            "value": value.copy(),      
+            "S"    : S.copy(),
+            "moved": movedStr
+        })
+
+    valueRef=unitsTickerRef.mul(pTicker).sum()
+
+    return records,valueRef,value
+    
 
