@@ -10,13 +10,13 @@ import re
 import os
 import pandas as pd
 import numpy as np
-from datetime import date
+from datetime import date,datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 
 # --- PARAMETERS ---
 
-tickerIdx   = [ "VETH.DE" , "DAVV.DE" , "MSFT" , "NVDA" , "INTC", "AAPL"] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+tickerIdx   = [ "VETH.DE" , "DAVV.DE" , "MSFT" , "NVDA" , "INTC"] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
 indicators  = [ "TR005" ]  # True Range Period
 
 
@@ -145,7 +145,15 @@ def get_data(tickerIdx, start_date, end_date, cache_dir="data"):
     file_path = os.path.join(cache_dir, f"data.csv")
 
     if os.path.exists(file_path):
-        data = pd.read_csv(file_path, index_col=0, parse_dates=True)
+        data            = pd.read_csv(file_path,  header=[0,1], index_col=0, parse_dates=True)
+        tickers_in_data = data.columns.get_level_values("Ticker").unique().tolist()
+        file_mtime      = datetime.fromtimestamp(os.path.getmtime(file_path))
+        is_old_file     = (datetime.now() - file_mtime > timedelta(days=1))
+        not_same_ticker  = set(tickers_in_data) != set(ticker)
+        if is_old_file or not_same_ticker:
+            data = yf.download(ticker, start=start_date, end=end_date, auto_adjust=False)
+            data = data.dropna().iloc[1:]
+            data.to_csv(file_path)
     else:
         data = yf.download(ticker, start=start_date, end=end_date, auto_adjust=False)
         data = data.dropna().iloc[1:]

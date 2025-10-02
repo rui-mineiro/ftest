@@ -219,3 +219,4 @@ __pycache__/env150.cpython-312.pyc
 .gitignore
 __pycache__/env150.cpython-312.pyc
 __pycache__/env150.cpython-312.pyc
+data/data.csv
