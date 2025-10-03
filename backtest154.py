@@ -12,8 +12,8 @@ from env_plot_03 import *
 
 data                   = get_data(tickerIdx,start_date,end_date)
 indicator              = get_indicator(data,indicators)
-SIG                    = get_SIG(indicator)   # Score Limit Hold , Sell and Buy
-records,valueRef,value = backtest(data,indicator,SIG,tickerIdx)
+SIG                    = get_SIG(indicator)
+records,valueRef,value = backtest(data,indicator,SIG)
 df                     = pd.DataFrame(records)
 
 print()
@@ -22,10 +22,9 @@ print(f"Optimized: {value:.2f}€")
 
 plot_fig00(df)
 
-indicator=get_indicator(data,indicators)
+# indicator=get_indicator(data,indicators)
 indicator.columns=indicator.columns.swaplevel(0,1)
-# 
-idx=[ 5 , 6,7,8]
+
 for ticker in tickerIdx:
-    plot_fig03(indicator[ticker], idx,ticker)
+    plot_fig03(df,indicator[ticker],indicatorSIG,ticker)
 

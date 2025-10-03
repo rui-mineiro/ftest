@@ -16,8 +16,9 @@ from dateutil.relativedelta import relativedelta
 
 # --- PARAMETERS ---
 
-tickerIdx   = [ "VETH.DE" , "DAVV.DE" , "MSFT" , "NVDA" , "INTC"] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
-indicators  = [ "TR003" ]  # True Range Period
+tickerIdx     = [ "VETH.DE" , "DAVV.DE"  ] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+indicators    = [ "TR001" , "TR003" , "TR005" , "TR010" , "TR015" ]  # True Range Period
+indicatorSIG  = [ "TR005" ]  # True Range Period  "#RLTR005"
 
 
 end_date = date.today()
@@ -30,31 +31,15 @@ tickerNum = len(tickerIdx)
 tickers    = pd.DataFrame( {'ticker' : tickerIdx })
 
 
-# S_H       = [  -1/100 for _ in range(tickerNum) ]                        # Score Hold   Real*tickerNum < 0 [-0.05, -0.05]
-# S_S       = [  -1/100 for _ in range(tickerNum) ]                        # Score Sell   Real*tickerNum < 0 [-0.01, -0.01]
-# S_B       = [   1/100 for _ in range(tickerNum) ]                        # Score Buy    Real*tickerNum > 0 [ 0.01,  0.01]
-
-records = []
-unitsTicker    = pd.Series()  # Tickers Units
-unitsTickerH   = pd.Series()  # Tickers High >   S_K
-unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
-
-
 def get_SIG(df):
     
     tickers = df.columns.get_level_values("Ticker").unique()
-    choices = [-1, 0, 1]
-    probs   = [0.1, 0.8, 0.1]
 
-#     S = pd.DataFrame(
-#         np.random.choice(choices, size=(len(df), len(tickers) ), p=probs),
-#         index=df.index,
-#         columns=tickers
-#         )
+    S = pd.DataFrame(0, index=df.index, columns=df[indicatorSIG].columns)
 
-    S = pd.DataFrame( 0,index=df.index, columns=tickers )
-    S[df["#RLTR003"]<0.6]=-1
-    S[df["#RLTR003"]>0.9]= 1
+    S[df[indicatorSIG] > 4] = -1
+    S[df[indicatorSIG] < 2] =  1
+    S.columns = S.columns.droplevel(0)
 
     return S
 
@@ -62,8 +47,8 @@ def get_SIG(df):
 def get_TickerPrice(df):
     
     # df: MultiIndex columns = ['Indicator','Ticker']
-    low  = df.xs('Low',  level='Price', axis=1)
-    high = df.xs('High', level='Price', axis=1)
+    low  = df.xs('Low',  level='Indicator', axis=1)
+    high = df.xs('High', level='Indicator', axis=1)
     
     rng = np.random.default_rng()              # or np.random.default_rng(42) for reproducible results
     u = rng.random(low.shape)                  # uniform [0,1) per cell
@@ -160,14 +145,8 @@ def get_data(tickerIdx, start_date, end_date, cache_dir="data"):
 
 
 def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Close") -> pd.DataFrame:
-    """
-    data.columns: MultiIndex with level0=Price field ('Open','High','Low','Close', ...)
-                  level1=Ticker
-    indicators: list like ['TR','TRMA05','TRSTD10','MID','MIDMA10','MIDSTD05', ...]
-    """
 
     cols       = {}
-
 
     need_mid = any(ind.startswith("TR0") for ind in indicators)
     if need_mid:
@@ -198,8 +177,8 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     TR    = Max - Min
                     cols[("Low" , t)] = L[t]
                     cols[("High", t)] = H[t]
-                    cols[("Min", t)]  = Min
-                    cols[("Max", t)]  = Max
+                    cols[("Min"+str(w).zfill(2), t)]     = Min
+                    cols[("Max"+str(w).zfill(2), t)]     = Max
                     cols[("MID"                   , t)]  = Mid
                     cols[("#DMID0"+str(w).zfill(2), t)]  = DMid      # 5
                     cols[("TR0"+str(w).zfill(2)   , t)]  = TR        # 6
@@ -208,17 +187,13 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
 ##                    cols[("#RUTR0"+str(w).zfill(2), t)]  = (Max-Mid)/TR            # 7
 ##                    cols[("#DRUTR0"+str(w).zfill(2), t)] = ((Max-Mid)/TR).diff()   # 
 ##                    cols[("LTR0"+str(w).zfill(2)  , t)]  = Mid-Min                 # 
-                    cols[("#RLTR0"+str(w).zfill(2) , t)]  = (Mid-Min)/TR            # 
+                    cols[("#RLTR0"+str(w).zfill(2) , t)] = (Mid-Min)/TR            # 
                     cols[("#MMR0"+str(w).zfill(2) , t)]  = (Max-Mid)/(Mid-Min)     # 8
 ##                    cols[("DMMR0"+str(w).zfill(2) , t)]  = ((Max-Mid)/(Mid-Min)).diff()  # 14
 
 
-
-
     out = pd.DataFrame(cols, index=data.index)
     out.columns = pd.MultiIndex.from_tuples(out.columns, names=["Indicator", "Ticker"])
-    # out = out.sort_index(axis=1, level=["Indicator", "Ticker"])
-    
     
 
     return out
@@ -226,19 +201,21 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
 
 
 
-def backtest(data,indicator,SIG,tickerIdx,cash=10000,N=3):
+def backtest(data,indicator,SIG,cash=10000,N=2):
 
-                   
+    records = []
 
-    TickerPrice    = get_TickerPrice(data)
+    tickerIdx = indicator.columns.get_level_values("Ticker").unique().tolist()
+
+    TickerPrice    = get_TickerPrice(indicator)
     
     pTicker        = TickerPrice.iloc[0]
-    unitsTicker    = pd.Series(1, index=tickerIdx, dtype=int)
+    unitsTicker    = pd.Series(0, index=tickerIdx, dtype=int)
     unitsTickerRef = get_unitsTickerBuy(tickerIdx,pTicker,cash)
     cash           = cash - unitsTicker.mul(pTicker).sum()
-    t = 1
+    t = 0
     
-    for _ , index in enumerate(data.index, start=1):
+    for _ , index in enumerate(indicator.index, start=1):
     
         date            = index
         pTicker         = TickerPrice.loc[index]
@@ -246,8 +223,7 @@ def backtest(data,indicator,SIG,tickerIdx,cash=10000,N=3):
         
         moved = ''
     
-        if t > 0 :
-            t-=1
+        if t == 0 :
             SBuy=(S[S==1])
             if not SBuy.empty:
                 unitsTickerBuy = unitsTicker[unitsTicker.index.intersection(SBuy.index)]
@@ -274,7 +250,7 @@ def backtest(data,indicator,SIG,tickerIdx,cash=10000,N=3):
                     unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
                     t=N
         else:
-            t=N
+            t-=1
     
         value = unitsTicker.mul(pTicker).sum() + cash
     
