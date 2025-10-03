@@ -15,11 +15,9 @@ from dateutil.relativedelta import relativedelta
 
 # --- PARAMETERS ---
 
-tickerIdx = [ "VETH.DE" ] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
-# indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
-# indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
-indicators     = [ "TR005" ]  # True Range and Median Price with previous close
-indicatorScore = [ "TR005" ]
+tickerIdx   = [ "VETH.DE" , "DAVV.DE"] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+indicators  = [ "TR005" ]  # True Range Period
+
 
 end_date = date.today()
 start_date = end_date - relativedelta(months=12)
@@ -45,16 +43,37 @@ unitsTicker    = pd.Series()  # Tickers Units
 unitsTickerH   = pd.Series()  # Tickers High >   S_K
 unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
 
-def get_ScoreLimits(data):
 
-    S_H=data["High"]
-    S_S=data["High"]
-    S_B=data["Low" ]
+def rnd_SIG(df):
+    
+    tickers = df.columns.get_level_values("Ticker").unique()
+    choices = [-1, 0, 1]
+    probs   = [0.1, 0.8, 0.1]
 
-    SL_H_Prev , SL_S_Prev , SL_B_Prev = S_H.shift(1) , S_S.shift(1) , S_B.shift(1)
+    S = pd.DataFrame(
+        np.random.choice(choices, size=(len(df), len(tickers) ), p=probs),
+        index=df.index,
+        columns=tickers
+        )
 
 
-    return S_H , S_S , S_B , SL_H_Prev , SL_S_Prev , SL_B_Prev
+    return S
+
+
+def rnd_TickerPrice(df):
+    
+    # df: MultiIndex columns = ['Indicator','Ticker']
+    low  = df.xs('Low',  level='Indicator', axis=1)
+    high = df.xs('High', level='Indicator', axis=1)
+    
+    rng = np.random.default_rng()              # or np.random.default_rng(42) for reproducible results
+    u = rng.random(low.shape)                  # uniform [0,1) per cell
+    
+    pTicker = low + (high - low) * u              # random price within [Low, High]
+
+    return pTicker
+
+
 
 def get_currentScore(indicator,indicator_Prev,index):
 
@@ -176,27 +195,18 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     cols[("High", t)] = H[t]
                     cols[("Min", t)]  = Min
                     cols[("Max", t)]  = Max
-<<<<<<< HEAD
                     cols[("MID"                   , t)]  = Mid
                     cols[("#DMID0"+str(w).zfill(2), t)]  = DMid      # 5
                     cols[("TR0"+str(w).zfill(2)   , t)]  = TR        # 6
-#                    cols[("RTR0"+str(w).zfill(2)  , t)]  = TR/Mid    # 7
-#                    cols[("UTR0"+str(w).zfill(2)  , t)]  = Max-Mid   # 8
-                    cols[("#RUTR0"+str(w).zfill(2), t)]  = (Max-Mid)/TR            # 9
-#                    cols[("#DRUTR0"+str(w).zfill(2), t)] = ((Max-Mid)/TR).diff()   # 10
-#                    cols[("LTR0"+str(w).zfill(2)  , t)]  = Mid-Min                 # 11
-#                    cols[("RLTR0"+str(w).zfill(2) , t)]  = (Mid-Min)/TR            # 12
-                    cols[("#MMR0"+str(w).zfill(2) , t)]  = (Max-Mid)/(Mid-Min)     # 13
-#                    cols[("DMMR0"+str(w).zfill(2) , t)]  = ((Max-Mid)/(Mid-Min)).diff()  # 14
+##                    cols[("RTR0"+str(w).zfill(2)  , t)]  = TR/Mid    # 
+##                    cols[("UTR0"+str(w).zfill(2)  , t)]  = Max-Mid   # 
+                    cols[("#RUTR0"+str(w).zfill(2), t)]  = (Max-Mid)/TR            # 7
+##                    cols[("#DRUTR0"+str(w).zfill(2), t)] = ((Max-Mid)/TR).diff()   # 
+##                    cols[("LTR0"+str(w).zfill(2)  , t)]  = Mid-Min                 # 
+##                    cols[("RLTR0"+str(w).zfill(2) , t)]  = (Mid-Min)/TR            # 
+                    cols[("#MMR0"+str(w).zfill(2) , t)]  = (Max-Mid)/(Mid-Min)     # 8
+##                    cols[("DMMR0"+str(w).zfill(2) , t)]  = ((Max-Mid)/(Mid-Min)).diff()  # 14
 
-=======
-                    cols[("MID0"+str(w).zfill(2) , t)]  = Mid
-                    cols[("DMID0"+str(w).zfill(2), t)]  = Mid.diff()
-                    cols[("TR0"+str(w).zfill(2)  , t)]  = TR
-                    cols[("UTR0"+str(w).zfill(2) , t)]  = Max-Mid
-                    cols[("LTR0"+str(w).zfill(2) , t)]  = Mid-Min
-                    cols[("MMR0"+str(w).zfill(2), t)]   = (Max-Mid)/(Mid-Min)
->>>>>>> b0946f9 (kjhkjh)
 
 
 

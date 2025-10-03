@@ -15,11 +15,9 @@ from dateutil.relativedelta import relativedelta
 
 # --- PARAMETERS ---
 
-tickerIdx = [ "VETH.DE" ] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
-# indicators = ["MA05", "MA10", "MSTD05", "MSTD10", "EMA05", "EMA10" , "PCT01" , "PCT05" , "PCT10" , "TRMA05", "TRSTD10" , "MID05" , "MID10" ]
-# indicators = [ "MA05", "MA10", "TR" , "TRMA05", "TRSTD05" , "MID" , "MIDMA05" , "MIDSTD05" ]  # True Range and Median Price with previous close
-indicators     = [ "TR005" ]  # True Range and Median Price with previous close
-indicatorScore = [ "TR005" ]
+tickerIdx   = [ "VETH.DE" ] #  "DAVV.DE" ] # "MSFT" ]   #  "AAPL" , "MSFT"  "DAVV.DE" , "NVDA" , "INTC"] # [ "DAVV.DE" , "NVDA" ] # ["NVDA" , "INTC"] # ["AAPL" , "MSFT" , "DAVV.DE" , "NVDA" , "INTC"]
+indicators  = [ "TR005" ]  # True Range Period
+
 
 end_date = date.today()
 start_date = end_date - relativedelta(months=12)
@@ -45,11 +43,15 @@ unitsTicker    = pd.Series()  # Tickers Units
 unitsTickerH   = pd.Series()  # Tickers High >   S_K
 unitsTickerL   = pd.Series()  # Tickers Low  <  -S_K
 
-def get_ScoreLimits(data):
 
-    S_H=data["High"]
-    S_S=data["High"]
-    S_B=data["Low" ]
+def get_ScoreLimits(df):
+    for t in df.columns.get_level_values("Ticker").unique():
+        base = df[("#RUTR005", t)]
+        df[("S_H", t)] = (base > 0.6).astype(int)
+        df[("S_L", t)] = (base < 0.4).astype(int)
+    df = df.sort_index(axis=1)
+
+    S_H , S_S , S_B = df[("S_H", tickerIdx[0])] , df[("S_H", tickerIdx[0])] , df[("S_H", tickerIdx[0])] 
 
     SL_H_Prev , SL_S_Prev , SL_B_Prev = S_H.shift(1) , S_S.shift(1) , S_B.shift(1)
 
@@ -176,27 +178,18 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     cols[("High", t)] = H[t]
                     cols[("Min", t)]  = Min
                     cols[("Max", t)]  = Max
-<<<<<<< HEAD
                     cols[("MID"                   , t)]  = Mid
                     cols[("#DMID0"+str(w).zfill(2), t)]  = DMid      # 5
                     cols[("TR0"+str(w).zfill(2)   , t)]  = TR        # 6
-#                    cols[("RTR0"+str(w).zfill(2)  , t)]  = TR/Mid    # 7
-#                    cols[("UTR0"+str(w).zfill(2)  , t)]  = Max-Mid   # 8
-                    cols[("#RUTR0"+str(w).zfill(2), t)]  = (Max-Mid)/TR            # 9
-#                    cols[("#DRUTR0"+str(w).zfill(2), t)] = ((Max-Mid)/TR).diff()   # 10
-#                    cols[("LTR0"+str(w).zfill(2)  , t)]  = Mid-Min                 # 11
-#                    cols[("RLTR0"+str(w).zfill(2) , t)]  = (Mid-Min)/TR            # 12
-                    cols[("#MMR0"+str(w).zfill(2) , t)]  = (Max-Mid)/(Mid-Min)     # 13
-#                    cols[("DMMR0"+str(w).zfill(2) , t)]  = ((Max-Mid)/(Mid-Min)).diff()  # 14
+##                    cols[("RTR0"+str(w).zfill(2)  , t)]  = TR/Mid    # 
+##                    cols[("UTR0"+str(w).zfill(2)  , t)]  = Max-Mid   # 
+                    cols[("#RUTR0"+str(w).zfill(2), t)]  = (Max-Mid)/TR            # 7
+##                    cols[("#DRUTR0"+str(w).zfill(2), t)] = ((Max-Mid)/TR).diff()   # 
+##                    cols[("LTR0"+str(w).zfill(2)  , t)]  = Mid-Min                 # 
+##                    cols[("RLTR0"+str(w).zfill(2) , t)]  = (Mid-Min)/TR            # 
+                    cols[("#MMR0"+str(w).zfill(2) , t)]  = (Max-Mid)/(Mid-Min)     # 8
+##                    cols[("DMMR0"+str(w).zfill(2) , t)]  = ((Max-Mid)/(Mid-Min)).diff()  # 14
 
-=======
-                    cols[("MID0"+str(w).zfill(2) , t)]  = Mid
-                    cols[("DMID0"+str(w).zfill(2), t)]  = Mid.diff()
-                    cols[("TR0"+str(w).zfill(2)  , t)]  = TR
-                    cols[("UTR0"+str(w).zfill(2) , t)]  = Max-Mid
-                    cols[("LTR0"+str(w).zfill(2) , t)]  = Mid-Min
-                    cols[("MMR0"+str(w).zfill(2), t)]   = (Max-Mid)/(Mid-Min)
->>>>>>> b0946f9 (kjhkjh)
 
 
 
