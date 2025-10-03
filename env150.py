@@ -176,6 +176,7 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     cols[("High", t)] = H[t]
                     cols[("Min", t)]  = Min
                     cols[("Max", t)]  = Max
+<<<<<<< HEAD
                     cols[("MID"                   , t)]  = Mid
                     cols[("#DMID0"+str(w).zfill(2), t)]  = DMid      # 5
                     cols[("TR0"+str(w).zfill(2)   , t)]  = TR        # 6
@@ -188,6 +189,14 @@ def get_indicator(data: pd.DataFrame, indicators: list[str], price_field="Adj Cl
                     cols[("#MMR0"+str(w).zfill(2) , t)]  = (Max-Mid)/(Mid-Min)     # 13
                     cols[("DMMR0"+str(w).zfill(2) , t)]  = ((Max-Mid)/(Mid-Min)).diff()  # 14
 
+=======
+                    cols[("MID0"+str(w).zfill(2) , t)]  = Mid
+                    cols[("DMID0"+str(w).zfill(2), t)]  = Mid.diff()
+                    cols[("TR0"+str(w).zfill(2)  , t)]  = TR
+                    cols[("UTR0"+str(w).zfill(2) , t)]  = Max-Mid
+                    cols[("LTR0"+str(w).zfill(2) , t)]  = Mid-Min
+                    cols[("MMR0"+str(w).zfill(2), t)]   = (Max-Mid)/(Mid-Min)
+>>>>>>> b0946f9 (kjhkjh)
 
 
 
