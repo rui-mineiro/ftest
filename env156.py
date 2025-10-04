@@ -226,7 +226,7 @@ def backtest(data,indicator_raw,SIG,cash=10000,N=2):
     
         date            = index
         pos = indicator.index.get_loc(date)
-        datePrev = indicator.index[pos - 1] if pos > 0 else 0
+        datePrev = indicator.index[pos - 1] if pos > 0 else date
 
         pTicker         = TickerPrice.loc[index]
         S               = SIG.loc[index]
@@ -244,7 +244,8 @@ def backtest(data,indicator_raw,SIG,cash=10000,N=2):
                     unitsTickerH    = unitsTickerBuy
                     for ticker in tickersH:
                         moved        = moved+"+"+str(unitsTickerH[ticker])+"#"+ticker
-                    indicator["TradeUnits"].loc[date][tickersH]=unitsTickerH
+
+                    indicator.loc[date, idx["TradeUnits" , tickersH]] = unitsTickerH.reindex(tickersH).to_numpy()
                     cash = cash - unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
                     unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
                     t=N
@@ -261,11 +262,12 @@ def backtest(data,indicator_raw,SIG,cash=10000,N=2):
                     cash = cash  + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
                     unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
                     t=N
-            indicator.loc[date, idx["TickerUnits", slice(None)]] = (indicator.loc[date,     idx["TickerUnits", slice(None)]] +
-                                                                    indicator.loc[datePrev, idx["TradeUnits" , slice(None)]] )
-
         else:
             t-=1
+
+        indicator.loc[date, idx["TickerUnits", slice(None)]] = (indicator.loc[date,     idx["TradeUnits"  , slice(None)]].to_numpy() +
+                                                                indicator.loc[datePrev, idx["TickerUnits" , slice(None)]].to_numpy() )
+
     
         value = unitsTicker.mul(pTicker).sum() + cash
     
