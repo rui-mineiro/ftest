@@ -210,12 +210,13 @@ def backtest(data,indicator_raw,SIG,cash=10000.0,N=2):
 
 
     tickerIdx = indicator.columns.get_level_values("Ticker").unique().tolist()
-    new_cols = pd.MultiIndex.from_product([['TradeUnits','TickerUnits','TickerPrice'], tickerIdx],names=['Indicator', 'Ticker'])
+    new_cols = pd.MultiIndex.from_product([['TickerPrice','TradeUnits','TickerUnits'], tickerIdx],names=['Indicator', 'Ticker'])
     new_df = pd.DataFrame(0.0,index=indicator.index,columns=new_cols)
     indicator = pd.concat([indicator, new_df], axis=1)
     TickerPrice    = get_TickerPrice(indicator)
     indicator.loc[:, idx["TickerPrice", TickerPrice.columns]] = TickerPrice.to_numpy()
-    indicator[("TotalPrice", "ALL")] = 0.0
+    indicator[("CurrentCash"    , "ALL")] = 0.0
+    indicator[("TotalValuation" , "ALL")] = 0.0
     
 
     
@@ -223,10 +224,11 @@ def backtest(data,indicator_raw,SIG,cash=10000.0,N=2):
     pTicker        = TickerPrice.iloc[0]
     unitsTicker    = pd.Series(0, index=tickerIdx, dtype=int)
     unitsTickerRef = get_unitsTickerBuy(tickerIdx,pTicker,cash)
-    cash           = cash - unitsTicker.mul(pTicker).sum()
+#    cash           = cash - unitsTicker.mul(pTicker).sum()
+    indicator.iloc[0, idx["CurrentCash","ALL"]]=cash
     t = 1
     
-    for _ , index in enumerate(indicator.index, start=1):
+    for k , index in enumerate(indicator.index, start=1):
     
         date            = index
         pos = indicator.index.get_loc(date)
@@ -240,41 +242,33 @@ def backtest(data,indicator_raw,SIG,cash=10000.0,N=2):
         if t == 0 :
             SBuy=(S[S==1])
             if not SBuy.empty:
-                unitsTickerBuy = unitsTicker[unitsTicker.index.intersection(SBuy.index)]
-                unitsTickerBuy = get_unitsTickerBuy(unitsTickerBuy.index,pTicker[unitsTickerBuy.index],cash)
-                unitsTickerBuy = unitsTickerBuy[unitsTickerBuy>0]
-                if not unitsTickerBuy.empty:
-                    tickersH=unitsTickerBuy.index
-                    unitsTickerH    = unitsTickerBuy
-                    for ticker in tickersH:
-                        moved        = moved+"+"+str(unitsTickerH[ticker])+"#"+ticker
-
-                    indicator.loc[date, idx["TradeUnits" , tickersH]] = unitsTickerH.reindex(tickersH).to_numpy()
-                    cash = cash - unitsTickerH.mul(pTicker[tickersH])[tickersH].sum()
-                    unitsTicker[tickersH] = unitsTicker[tickersH] + unitsTickerH[tickersH]
+                unitsTickerBuy = get_unitsTickerBuy(SBuy.index,indicator.loc[date,"TickerPrice"],indicator.loc[date,"CurrentCash"])
+                if unitsTickerBuy.sum()>0:
+                    tickersH      = unitsTickerBuy.index
+                    indicator.loc[date, idx["TradeUnits" , tickersH]] = unitsTickerBuy.reindex(tickersH).to_numpy()
                     t=N
             SSell=(S[S==-1])
             if not SSell.empty:
-                unitsTickerSell = unitsTicker[unitsTicker[unitsTicker>0].index.intersection(SSell.index)].astype(int)
-                unitsTickerSell = unitsTickerSell[unitsTickerSell>0]
-                if not unitsTickerSell.empty:
-                    unitsTickerL    = unitsTickerSell
-                    tickersL=unitsTickerL.index
-                    for ticker in tickersL:     
-                        moved        = moved+"-"+str(unitsTickerL[ticker])+"#"+ticker
-                    indicator.loc[date, idx["TradeUnits" , tickersL]] = -unitsTickerL.reindex(tickersL).to_numpy()
-                    cash = cash  + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
-                    unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
+                unitsTickerSell = indicator.loc[date, "TickerUnits"].index.intersection(SSell.index).astype(float)
+                if unitsTickerBuy.sum()>0:
+                    tickersL     = unitsTickerSell.index
+                    unitsTickerL = unitsTickerSell
+                    indicator.loc[date, idx["TradeUnits" , tickersL]] = -unitsTickerSell.reindex(tickersL).to_numpy()
+#                    cash = cash  + unitsTickerL.mul(pTicker[tickersL])[tickersL].sum()
+#                    unitsTicker[tickersL] = unitsTicker[tickersL] - unitsTickerL[tickersL]
                     t=N
         else:
             t-=1
 
-        indicator.loc[date, idx["TickerUnits", slice(None)]] = (indicator.loc[date,     idx["TradeUnits"  , slice(None)]].to_numpy() +
-                                                                indicator.loc[datePrev, idx["TickerUnits" , slice(None)]].to_numpy() )
-        indicator.loc[date, idx["TotalPrice", "ALL"]]        = (indicator.loc[date,     idx["TickerPrice" , slice(None)]].to_numpy() *
-                                                                 indicator.loc[datePrev, idx["TickerUnits" , slice(None)]].to_numpy()).sum() + cash
+        indicator.loc[date, idx["TickerUnits",   slice(None)]] = (indicator.loc[date,     idx["TradeUnits"  , slice(None)]].to_numpy() +
+                                                                  indicator.loc[datePrev, idx["TickerUnits" , slice(None)]].to_numpy() )
+        indicator.loc[date, idx["TotalValuation", "ALL"]]      = (indicator.loc[date,     idx["TickerPrice" , slice(None)]].to_numpy() *
+                                                                  indicator.loc[datePrev, idx["TickerUnits" , slice(None)]].to_numpy()).sum() + cash
     
-        value = unitsTicker.mul(pTicker).sum() + cash
+        indicator.loc[date, idx["TotalValuation", "ALL"]]      = (indicator.loc[date,     idx["TickerPrice" , slice(None)]].to_numpy() *
+                                                                  indicator.loc[datePrev, idx["TickerUnits" , slice(None)]].to_numpy()).sum() + cash
+    
+        value = 0 # unitsTicker.mul(pTicker).sum() + cash
     
         if not moved:
             movedStr=None
@@ -285,7 +279,7 @@ def backtest(data,indicator_raw,SIG,cash=10000.0,N=2):
             "date":  date,       
             "price": pTicker.copy(),    
             "units": unitsTicker.copy(),
-            "value": value.copy(),      
+#            "value": value.copy(),      
             "S"    : S.copy(),
             "moved": movedStr
         })

@@ -28,41 +28,19 @@ def plot_fig04(df,indicator):
     
 ###  End Prices    
     
-#    S_wide = df["S"].apply(pd.Series)
-#    S_wide["date"] = df["date"].values   # attach the real dates
-#    S_df = S_wide.melt(id_vars="date", var_name="ticker", value_name="Score")
-#    for ticker in S_df["ticker"].unique():
-#        plotData = S_df[S_df["ticker"] == ticker]
-#        fig.add_trace(
-#            go.Scatter(
-#                x=plotData["date"],
-#                y=plotData["Score"],
-#                mode="lines",
-#                name="S"+ticker
-#            ),
-#            row=1, col=1
-#        )
-    
-
 
 ### Start Switches + Value 
 
-
-    moved_wide = df["moved"].apply(pd.Series)
-    if len(moved_wide.columns) == 1:
-        moved_wide["date"] = df["date"].values
-        moved_wide=moved_wide.dropna()
-        moved_wide.columns=['moved','date']
-        
-        fig.add_trace(go.Scatter(
-            x=moved_wide["date"], y=[df.loc[df["date"]==d, "value"].values[0] for d in moved_wide["date"]],
-            mode="markers+text",
-            marker=dict(size=9, symbol="triangle-up", color="black"),
-            text=moved_wide["moved"], textposition="top center",
-            name="Switches"
-            ),secondary_y=True,
-            row=1, col=1
-        )
+    trades = indicator[indicator["TradeUnits"].sum(axis=1) > 0]["TotalPrice"]
+    fig.add_trace(go.Scatter(
+        x=trades.index , y=trades["ALL"],
+        mode="markers+text",
+        marker=dict(size=9, symbol="triangle-up", color="black"),
+#        text=moved_wide["moved"], textposition="top center",
+        name="Switches"
+        ),secondary_y=True,
+        row=1, col=1
+    )
     
     
     fig.add_trace(
