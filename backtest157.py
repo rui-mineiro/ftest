@@ -21,7 +21,7 @@ print()
 print(f"Reference: {valueRef:.2f}€")
 print(f"Optimized: {value:.2f}€")
 
-plot_fig04(df)
+plot_fig04(df,indicator)
 
 # indicator=get_indicator(data,indicators)
 indicator.columns=indicator.columns.swaplevel(0,1)

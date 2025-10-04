@@ -14,12 +14,15 @@ def plot_fig04(df,indicator):
                         specs=[[{"secondary_y": True}],[{"secondary_y": True}]])
     
 ###  Start Prices    
-    price_df   = indicator["TickerPrice"]
-    for ticker in price_df.columns:
+    price_wide = df["price"].apply(pd.Series)
+    price_wide["date"] = df["date"].values   # attach the real dates
+    price_df = price_wide.melt(id_vars="date", var_name="ticker", value_name="price")
+    for ticker in price_df["ticker"].unique():
+        plotData = price_df[price_df["ticker"] == ticker]
         fig.add_trace(
             go.Scatter(
-                x=price_df.index,
-                y=price_df[ticker],
+                x=plotData["date"],
+                y=plotData["price"],
                 mode="lines",
                 name=ticker
             ),
