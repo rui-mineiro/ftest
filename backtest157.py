@@ -5,10 +5,11 @@ import datetime
 import itertools
 import pulp
 from numba import njit
-from env156 import *
+from env157 import *
 from env_plot_00 import *
 from env_plot_01 import *
 from env_plot_03 import *
+from env_plot_04 import *
 
 data                   = get_data(tickerIdx,start_date,end_date)
 indicator              = get_indicator(data,indicators)
@@ -20,7 +21,7 @@ print()
 print(f"Reference: {valueRef:.2f}€")
 print(f"Optimized: {value:.2f}€")
 
-plot_fig00(df)
+plot_fig04(df)
 
 # indicator=get_indicator(data,indicators)
 indicator.columns=indicator.columns.swaplevel(0,1)
